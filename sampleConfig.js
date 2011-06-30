@@ -1,5 +1,5 @@
 {
-  redisPort: 1982,
+  redisPort: 6379,
   redisHost: 'localhost',
   port: 8126
 }

@@ -3,6 +3,7 @@ var dgram  = require('dgram')
   , net    = require('net')
   , msgpack = require('msgpack')
   , config = require('./config')
+  , redis  = require('redis')
 
 var msgsreceived = 0;
 var oldmsgsreceived = 0;
@@ -10,6 +11,31 @@ var counters = {};
 var timers = {};
 var debugInt, flushInt, server;
 
+function redisConnect(config) {
+  var port = config.redisPort || 6379,
+      host = config.redisHost || "localhost",
+      options = config.redisOptions || {};
+
+  var client = redis.createClient(port, host, options);
+
+  client.on("error", function(err) {
+    sys.log("Redis Error: " + err.message);
+    /* if this was connection refused, lets exit */
+    if (err.message.match(/ECONNREFUSED/)) {
+      process.exit(-1);
+    }
+  });
+
+  client.on("connect", function() {
+    sys.log("connected to Redis server on " +
+      (config.redisHost || 'localhost') + ":" +
+      (config.redisPort || 6379));
+  });
+
+  return client;
+}
+
+/* read the config file and run the server */
 config.configFile(process.argv[2], function (config, oldConfig) {
   if (! config.debug && debugInt) {
     clearInterval(debugInt); 
@@ -23,7 +49,11 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     }, config.debugInterval || 10000);
   }
 
+  var redisClient = redisConnect(config);
+
   if (server === undefined) {
+    var port = config.port || 8126;
+
     server = dgram.createSocket('udp4', function (msg, rinfo) {
       if (config.dumpMessages) { sys.log(msg.toString()); }
       msgsreceived += 1;
@@ -65,23 +95,25 @@ config.configFile(process.argv[2], function (config, oldConfig) {
       }
       */
     });
+    
+    server.on("listening", function() {
+      sys.log("logd listening on port " + port);
+    });
 
-    sys.log("Running on port " + (config.port || 8125));
-    server.bind(config.port || 8125);
-
-    var logInterval = Number(config.logInterval || 1000);
-
-    /* every second, print if we've received messages or not */
-    logInt = setInterval(function() {
-
-      if (msgsreceived != oldmsgsreceived) {
-        dmsg = msgsreceived - oldmsgsreceived;
-        oldmsgsreceived = msgsreceived;
-        sys.log("Received " + dmsg + " messages in 1s (" + msgsreceived + " total).");
-      }
-    }, logInterval);
+    server.bind(port);
 
   }
+    
+  /* every second, print if we've received messages or not */
+  var logInterval = Number(config.logInterval || 1000);
+
+  logInt = setInterval(function() {
+    if (msgsreceived != oldmsgsreceived) {
+      dmsg = msgsreceived - oldmsgsreceived;
+      oldmsgsreceived = msgsreceived;
+      sys.log("Received " + dmsg + " messages in 1s (" + msgsreceived + " total).");
+    }
+  }, logInterval);
     /*
     var flushInterval = Number(config.flushInterval || 10000);
 
