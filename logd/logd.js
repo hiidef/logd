@@ -4,6 +4,9 @@ var dgram  = require('dgram')
   , msgpack = require('msgpack')
   , config = require('./config')
 
+var msgsreceived = 0;
+var oldmsgsreceived = 0;
+var logintcount = 0;
 var counters = {};
 var timers = {};
 var debugInt, flushInt, server;
@@ -24,6 +27,11 @@ config.configFile(process.argv[2], function (config, oldConfig) {
   if (server === undefined) {
     server = dgram.createSocket('udp4', function (msg, rinfo) {
       if (config.dumpMessages) { sys.log(msg.toString()); }
+      msgsreceived += 1;
+      var blob = msgpack.unpack(msg);
+      // console.log(blob);
+
+      /*
       var bits = msg.toString().split(':');
       var key = bits.shift()
                     .replace(/\s+/g, '_')
@@ -56,10 +64,29 @@ config.configFile(process.argv[2], function (config, oldConfig) {
           counters[key] += Number(fields[0] || 1) * (1 / sampleRate);
         }
       }
+      */
     });
 
+    sys.log("Running on port " + (config.port || 8125));
     server.bind(config.port || 8125);
 
+    var logInterval = Number(config.logInterval || 1000);
+
+    /* every second, print if we've received messages or not */
+    logInt = setInterval(function() {
+
+      if (msgsreceived != oldmsgsreceived) {
+        dmsg = msgsreceived - oldmsgsreceived;
+        oldmsgsreceived = msgsreceived;
+        sys.log("Received " + dmsg + " messages in " + (logintcount+1) + "s (" + msgsreceived + " total).");
+        logintcount = 0;
+      } else {
+        logintcount++;
+      }
+    }, logInterval);
+
+  }
+    /*
     var flushInterval = Number(config.flushInterval || 10000);
 
     flushInt = setInterval(function () {
@@ -68,6 +95,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
       var numStats = 0;
       var key;
 
+      
       for (key in counters) {
         var value = counters[key] / (flushInterval / 1000);
         var message = 'stats.' + key + ' ' + value + ' ' + ts + "\n";
@@ -139,7 +167,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
 
     }, flushInterval);
   }
-
+  */
 });
 
 
