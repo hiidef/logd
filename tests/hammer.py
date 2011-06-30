@@ -12,8 +12,7 @@ import multiprocessing
 import msgpack
 import socket
 
-def sendmsg(to):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+def sendmsg(sock, to):
     id = uuid4().hex
     msg = {'id': id, 'msg': 'sending %s' % id}
     msgb = msgpack.packs(msg)
@@ -22,8 +21,9 @@ def sendmsg(to):
 def sendnmsg(to, n):
     success = 0
     t0 = time.time()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     for i in xrange(n):
-        ret = sendmsg(to)
+        ret = sendmsg(sock, to)
         success += 1 if ret else 0
     td = time.time() - t0
     print 'Sent %d of %d in %0.2f' % (success, n, td)

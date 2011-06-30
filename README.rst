@@ -38,3 +38,12 @@ Create a new config file with the proper settings for your local setup.
 running the tests
 -----------------
 
+To hammer the logd server, run logd on a server and then use the 
+``tests/hammer.py`` script to hammer it relentlessly.  ``hammer`` requires
+the package ``msgpack-python``, which can be installed via pip/easy_install,
+but otherwise should run on any python version that has multiprocessing.
+
+The default test run uses one process per CPU to send 10000 dgram messages
+to logd.  The host, port, concurrency, and total number of messages can be
+altered with commandline arguments;  see ``tests/hammer.py --help``.
+
