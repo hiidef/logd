@@ -7,6 +7,10 @@ var Configurator = function (file) {
   var self = this;
   var config = {};
   var oldConfig = {};
+  
+  if (typeof file == 'undefined') {
+    throw new Error('You must pass in a config file to logd.');
+  }
 
   this.updateConfig = function () {
     sys.log('reading config file: ' + file);

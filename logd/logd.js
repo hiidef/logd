@@ -1,6 +1,7 @@
 var dgram  = require('dgram')
   , sys    = require('sys')
   , net    = require('net')
+  , msgpack = require('msgpack')
   , config = require('./config')
 
 var counters = {};
