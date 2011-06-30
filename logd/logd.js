@@ -6,7 +6,6 @@ var dgram  = require('dgram')
 
 var msgsreceived = 0;
 var oldmsgsreceived = 0;
-var logintcount = 0;
 var counters = {};
 var timers = {};
 var debugInt, flushInt, server;
@@ -78,10 +77,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
       if (msgsreceived != oldmsgsreceived) {
         dmsg = msgsreceived - oldmsgsreceived;
         oldmsgsreceived = msgsreceived;
-        sys.log("Received " + dmsg + " messages in " + (logintcount+1) + "s (" + msgsreceived + " total).");
-        logintcount = 0;
-      } else {
-        logintcount++;
+        sys.log("Received " + dmsg + " messages in 1s (" + msgsreceived + " total).");
       }
     }, logInterval);
 

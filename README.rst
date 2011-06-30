@@ -23,6 +23,8 @@ From there, you should install msgpack:
 The default msgpack repository unfortunately contains some code that does not 
 work properly with recent changes in nodejs.
 
+Install  the ``hiredis`` and ``redis`` packages normally with npm.
+
 .. _nodejs: http://nodejs.org
 .. _npm: http://npmjs.org
 
