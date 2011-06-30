@@ -1,0 +1,8 @@
+.DS_Store
+*.*~
+*.py[co]
+*.egg-info
+build
+dist
+*.swp
+tags
