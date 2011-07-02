@@ -52,10 +52,11 @@ log messages
 The logd data format must contain at least::
 
     { 
-        type: 1,
+        id: 1,
         path: (str),
         level: (int),
         msg: (str),
+        name: (str),
         time: (double),
     }
 
@@ -73,7 +74,7 @@ counters
 The counter data format is specific and should match::
 
     {
-        type: 2,
+        id: 2,
         key: (str),
         value: (int -- optional),
         sampleRate: (int -- optional)
@@ -85,7 +86,7 @@ timers
 The timer format::
 
     {
-        type: 3,
+        id: 3,
         key: (str),
         value: (double),
     }
