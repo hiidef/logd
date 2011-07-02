@@ -11,8 +11,9 @@ from logging.handlers import DatagramHandler
 class PylogdHandler(DatagramHandler):
     """A logging handler that sends messages to Pylogd.  Initialize with
     the host and port (default: localhost:8126)."""
-    def __init__(self, host='localhost', port=8126):
+    def __init__(self, path, host='localhost', port=8126):
         port = int(port)
+        self.path = path
         # the eventual base of DatagramHandler is not new-style
         DatagramHandler.__init__(self, host, port)
 
@@ -25,11 +26,12 @@ class PylogdHandler(DatagramHandler):
             record.exc_info = None  # to avoid Unpickleable error
         msg = {
             'type': 1, # log message type
-            'key': record.name,
+            'name': record.name,
+            'path': self.path,
             'pid': record.process,
             'time': record.created,
             'msg': record.msg,
-            'loc': '%s.%s:%s' % (record.pathname, record.funcName, record.lineno),
+            'loc': '%s %s:%s' % (record.pathname, record.funcName, record.lineno),
         }
         if record.exc_text:
             msg['tb'] = record.exc_text
