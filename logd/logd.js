@@ -11,6 +11,7 @@ var types = Object.freeze({
   LOG: 1,
   COUNTER: 2,
   TIMER: 3,
+  DELETE_LOG: 4,
 });
 
 var levels = Object.freeze({
@@ -108,6 +109,36 @@ function trimLogs(redisClient, config) {
   });
 }
 
+/* Delete a log and all support data for a given log on a path. */
+function deleteLog(redisClient, config, path) {
+  var logd = config.redis.prefix || 'logd';
+  var base = logd + ':log:' + path;
+  redisClient.lrange(base, 0, -1, function(err, keys) {
+    var multi = redisClient.multi();
+    for (var i=0; i<keys.length; i++) {
+      var key = keys[i];
+      multi.del(base + ':' + key);
+    }
+    multi.del(base);
+    multi.del(base + ':next');
+    multi.exec(redisErrback);
+  });
+  redisClient.lrange(base + ':' + 'names', 0, -1, function(err, keys) {
+    var multi = redisClient.multi();
+    multi
+      .del(base + ':level:' + 10)
+      .del(base + ':level:' + 20)
+      .del(base + ':level:' + 30)
+      .del(base + ':level:' + 40)
+      .del(base + ':level:' + 50);
+    for (var i=0; i<keys.length; i++) {
+      multi.del(base + ':name:' + keys[i]);
+    }
+    multi.del(base + ':names');
+    multi.exec(redisErrback);
+  });
+}
+
 /* read the config file and run the server */
 config.configFile(process.argv[2], function (config, oldConfig) {
   if (! config.debug && debugInt) {
@@ -166,6 +197,8 @@ config.configFile(process.argv[2], function (config, oldConfig) {
             timers[blob.key] = [];
           }
           timers[blob.key].push(blob.value);
+        case types.DELETE_LOG:
+          deleteLog(redisClient, blob.path);
         default: break;
       }
     });
