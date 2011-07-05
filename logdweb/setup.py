@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Setup script for pylogd."""
+"""Setup script for logdweb."""
 
 from setuptools import setup, find_packages
+import sys, os
 
-from pylogd import VERSION
-version = '.'.join(map(str, VERSION))
+version = '0.1'
 
 # some trove classifiers:
 
@@ -15,28 +15,26 @@ version = '.'.join(map(str, VERSION))
 # Operating System :: POSIX
 
 setup(
-    name='pylogd',
+    name='logdweb',
     version=version,
-    description="logd python library",
+    description="logd web interface",
     long_description=open('README.rst').read(),
     # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'License :: OSI Approved :: MIT License',
-        'Intended Audience :: Developers',
+        'Development Status :: 1 - Planning',
     ],
-    keywords='logd python udp logging server',
+    keywords='logd logging web interface',
     author='Jason Moiron',
     author_email='jason@hiidef.com',
-    url="'http://github.com/hiidef/logd'",
+
+    url='https://github.com/hiidef/logd',
     license='MIT',
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
     include_package_data=True,
     zip_safe=False,
     test_suite="tests",
-    # -*- Extra requirements: -*-
     install_requires=[
-        'msgpack-python',
+      # -*- Extra requirements: -*-
     ],
     entry_points="""
     # -*- Entry points: -*-

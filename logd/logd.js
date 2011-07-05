@@ -24,7 +24,7 @@ var levels = Object.freeze({
 
 var messagesReceived = 0;
 var messagesReceivedPrev = 0;
-var logMessages = [];
+var logMessages = {};
 var counters = {};
 var timers = {};
 var debugInt, flushInt, logInt, trimInt, server;
@@ -124,13 +124,17 @@ function deleteLog(redisClient, config, path) {
     multi.exec(redisErrback);
   });
   redisClient.lrange(base + ':' + 'names', 0, -1, function(err, keys) {
+    /* FIXME: We are going to just keep level names here, which means we also
+     * need to store a set of them;  similar to how we have log:names, we need
+     * log:levels.  For now, we assume the python levelnames.
+     */
     var multi = redisClient.multi();
     multi
-      .del(base + ':level:' + 10)
-      .del(base + ':level:' + 20)
-      .del(base + ':level:' + 30)
-      .del(base + ':level:' + 40)
-      .del(base + ':level:' + 50);
+      .del(base + ':level:INFO')
+      .del(base + ':level:DEBUG')
+      .del(base + ':level:WARNING')
+      .del(base + ':level:ERROR')
+      .del(base + ':level:CRITICAL');
     for (var i=0; i<keys.length; i++) {
       multi.del(base + ':name:' + keys[i]);
     }
@@ -173,10 +177,17 @@ config.configFile(process.argv[2], function (config, oldConfig) {
       messagesReceived++;
       var blob = msgpack.unpack(msg);
       if (config.debug) { sys.log(msg.toString()); }
-      
+
       switch (blob.id) {
         case types.LOG:
-          sys.log("Received msg: " + sys.inspect(blob));
+          /* TODO: do we care about this? this doubles the amt of
+           * msgpack/unpack we have to do, but it allows us to always know
+           * which ip sent us some information
+           */
+          /* FIXME: this code results in messages i can't unpack in python
+          blob.ip = rinfo.address;
+          blob.packed = msgpack.pack(blob);
+          */
           blob.packed = msg;
           if (! logMessages[blob.path]) {
             logMessages[blob.path] = [];
@@ -229,7 +240,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     var messages, logger, size, msg;
     var allsize = Number(config.logSize['all'] || 250000);
     var logd = config.redis.prefix || 'logd';
-    sys.log("flushing messages: " + sys.inspect(logMessages));
+
     for (path in logMessages) {
       messages = logMessages[path];
       if (! messages.length) { continue; }
@@ -268,9 +279,9 @@ config.configFile(process.argv[2], function (config, oldConfig) {
         }
 
         /* clear local cache, increment the in-redis next val, and flush */
-        logMessages[path] = [];
         multi.incrby(base + ':next', count);
         multi.exec(redisErrback);
+        logMessages[path] = [];
       });
     }
 

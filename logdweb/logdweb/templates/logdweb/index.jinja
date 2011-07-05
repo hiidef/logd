@@ -1,0 +1,32 @@
+{% extends "logdweb/base.jinja" %}
+
+{% block header %}
+	<h1 class="title"><a href="{{ reverse('logd-index') }}">logd admin</a></h1>
+{% endblock %}
+
+{% block sidebar %}
+	<h2>logfiles</h2>
+	<ul>
+		{% for logfile in info['logfiles'] %}
+			<li>
+			{% if path and path == logfile['path'] %}
+				{{ logfile['path'] }} ({{ logfile['length'] }})
+			{% else %}
+				<a href="{{ reverse('logd-path-index', kwargs={'path':logfile['path']}) }}">{{ logfile['path'] }}</a>
+				({{ logfile['length'] }})
+			{% endif %}
+			</li>
+		{% endfor %}
+	</ul>
+{% endblock %}
+
+{% block main %}
+	{% if path %}
+		<h2>{{ path }}</h2>
+		<ul class="log">
+			{% for line in lines %}
+				<li>{{ line['msg'] }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+{% endblock %}
