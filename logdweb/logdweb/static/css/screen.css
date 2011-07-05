@@ -78,3 +78,8 @@ h2 { margin: 5px 0 20px 0; font-size: 16px; }
 #sidebar ul { margin: 1em 1em 1em 2em; }
 #sidebar ul li { list-style: circle; }
 
+.log { 
+    font-family: consolas, inconsolata, menlo, monaco, monospace; 
+    font-size: 10px;
+}
+.log td { padding: 0 2px 0 2px; }

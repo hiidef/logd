@@ -23,10 +23,18 @@
 {% block main %}
 	{% if path %}
 		<h2>{{ path }}</h2>
-		<ul class="log">
+		<table class="log">
 			{% for line in lines %}
-				<li>{{ line['msg'] }}</li>
+				<tr>
+					<td class="level">
+					<a href="{{ reverse('logd-path-level', kwargs={'path':path, 'level': line['level']}) }}" class="{{ line['level'].lower() }}">{{ line['level'].lower()}}</a>
+					</td>
+					<td class="logger">
+						<a href="{{ reverse('logd-path-logger', kwargs={'path': path, 'logger': line['name']}) }}">{{ line['name'] }}</a>
+					</td>
+					<td class="msg">{{ line['msg'] }}</td>
+				</tr>
 			{% endfor %}
-		</ul>
+		</table>
 	{% endif %}
 {% endblock %}
