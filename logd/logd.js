@@ -238,6 +238,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
             timers[blob.key] = [];
           }
           timers[blob.key].push(blob.value);
+          break;
         case types.DELETE_LOG:
           deleteLog(redisClient, blob.path);
         default: break;
