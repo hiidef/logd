@@ -392,7 +392,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     statString += 'statsd.numStats ' + numStats + ' ' + ts + "\n";
     if (numStats) {
       if (config.debug) {
-        sys.log("Sending stats string: \n" + statsString);
+        sys.log("Sending stats string: \n" + statString);
       }
       sendStats(config, statString);
     }
