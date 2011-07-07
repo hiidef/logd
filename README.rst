@@ -42,6 +42,16 @@ To run logd, simply use node to run logd/logd.js:
 Create a new config file with the proper settings for your local setup.  You
 will need redis (and, eventually, graphite) running.
 
+using logd
+----------
+
+There is an official web frontend for logd called `logdweb`_.
+
+There is an official python interface for logd's logging and statsd-style stats
+called `pylogd`_.
+
+.. _logdweb: https://github.com/hiidef/logdweb
+.. _pylogd: https://github.com/hiidef/pylogd
 
 data formats
 ~~~~~~~~~~~~
