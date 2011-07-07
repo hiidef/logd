@@ -146,8 +146,11 @@ function deleteLog(redisClient, config, path) {
 /* send stats to graphite */
 
 function sendStats(config, stats) {
+  var port = Number(config.graphite.port || 2003)
+    , host = config.graphite.host || 'localhost';
+
   try {
-    var graphite = net.createConnection(config.graphitePort, config.graphiteHost);
+    var graphite = net.createConnection(port, host);
     graphite.addListener('error', function(connectionException){
       if (config.debug) {
         sys.log(connectionException);
@@ -184,7 +187,13 @@ config.configFile(process.argv[2], function (config, oldConfig) {
   }
 
   if (typeof config.redis == 'undefined') {
+    sys.log("no redis config, using defaults.");
     config.redis = {};
+  }
+  
+  if (typeof config.graphite == 'undefined') {
+    sys.log("no graphite config, using defaults.");
+    config.graphite = {};
   }
 
   var redisClient = redisConnect(config);
@@ -380,7 +389,12 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     }
 
     statString += 'statsd.numStats ' + numStats + ' ' + ts + "\n";
-    sendStats(statString);
+    if (numStats) {
+      if (config.debug) {
+        sys.log("Sending stats string: \n" + statsString);
+      }
+      sendStats(config, statString);
+    }
 
   }, statsInterval);
 
