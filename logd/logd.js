@@ -27,7 +27,7 @@ var messagesReceivedPrev = 0;
 var logMessages = {};
 var counters = {};
 var timers = {};
-var debugInt, flushInt, logInt, trimInt, server;
+var debugInt, flushInt, logInt, trimInt, statsInt, server;
 
 
 function redisErrback(err, ret) {
@@ -141,6 +141,27 @@ function deleteLog(redisClient, config, path) {
     multi.del(base + ':names');
     multi.exec(redisErrback);
   });
+}
+
+/* send stats to graphite */
+
+function sendStats(config, stats) {
+  try {
+    var graphite = net.createConnection(config.graphitePort, config.graphiteHost);
+    graphite.addListener('error', function(connectionException){
+      if (config.debug) {
+        sys.log(connectionException);
+      }
+    });
+    graphite.on('connect', function() {
+      this.write(stats);
+      this.end();
+    });
+  } catch(e) {
+    if (config.debug) {
+      sys.log(e);
+    }
+  }
 }
 
 /* read the config file and run the server */
@@ -295,88 +316,74 @@ config.configFile(process.argv[2], function (config, oldConfig) {
   trimInt = setInterval(function() {
     trimLogs(redisClient, config);
   }, trimInterval)
-    /*
-    var flushInterval = Number(config.flushInterval || 10000);
+  
 
-    flushInt = setInterval(function () {
-      var statString = '';
-      var ts = Math.round(new Date().getTime() / 1000);
-      var numStats = 0;
-      var key;
+  /* Every 10 seconds, flush stats to graphite.  This code is exactly
+   * the same as the statsd code, as even the local storage is identical.
+   */
+  var statsInterval = Number(config.statsInterval || 10000);
 
-      
-      for (key in counters) {
-        var value = counters[key] / (flushInterval / 1000);
-        var message = 'stats.' + key + ' ' + value + ' ' + ts + "\n";
-        message += 'stats_counts.' + key + ' ' + counters[key] + ' ' + ts + "\n";
+  statsInt = setInterval(function() {
+    var statString = '';
+    var ts = Math.round(new Date().getTime() / 1000);
+    var numStats = 0;
+    var key;
+
+    for (key in counters) {
+      var value = counters[key] / (flushInterval / 1000);
+      var message = 'stats.' + key + ' ' + value + ' ' + ts + "\n";
+      message += 'stats_counts.' + key + ' ' + counters[key] + ' ' + ts + "\n";
+      statString += message;
+      counters[key] = 0;
+
+      numStats += 1;
+    }
+
+    for (key in timers) {
+      if (timers[key].length > 0) {
+        var pctThreshold = config.percentThreshold || 90;
+        var values = timers[key].sort(function (a,b) { return a-b; });
+        var count = values.length;
+        var min = values[0];
+        var max = values[count - 1];
+
+        var mean = min;
+        var maxAtThreshold = max;
+
+        if (count > 1) {
+          var thresholdIndex = Math.round(((100 - pctThreshold) / 100) * count);
+          var numInThreshold = count - thresholdIndex;
+          values = values.slice(0, numInThreshold);
+          maxAtThreshold = values[numInThreshold - 1];
+
+          // average the remaining timings
+          var sum = 0;
+          for (var i = 0; i < numInThreshold; i++) {
+            sum += values[i];
+          }
+
+          mean = sum / numInThreshold;
+        }
+
+        timers[key] = [];
+
+        var message = "";
+        message += 'stats.timers.' + key + '.mean ' + mean + ' ' + ts + "\n";
+        message += 'stats.timers.' + key + '.upper ' + max + ' ' + ts + "\n";
+        message += 'stats.timers.' + key + '.upper_' + pctThreshold + ' ' + maxAtThreshold + ' ' + ts + "\n";
+        message += 'stats.timers.' + key + '.lower ' + min + ' ' + ts + "\n";
+        message += 'stats.timers.' + key + '.count ' + count + ' ' + ts + "\n";
         statString += message;
-        counters[key] = 0;
 
         numStats += 1;
       }
+    }
 
-      for (key in timers) {
-        if (timers[key].length > 0) {
-          var pctThreshold = config.percentThreshold || 90;
-          var values = timers[key].sort(function (a,b) { return a-b; });
-          var count = values.length;
-          var min = values[0];
-          var max = values[count - 1];
+    statString += 'statsd.numStats ' + numStats + ' ' + ts + "\n";
+    sendStats(statString);
 
-          var mean = min;
-          var maxAtThreshold = max;
+  }, statsInterval);
 
-          if (count > 1) {
-            var thresholdIndex = Math.round(((100 - pctThreshold) / 100) * count);
-            var numInThreshold = count - thresholdIndex;
-            values = values.slice(0, numInThreshold);
-            maxAtThreshold = values[numInThreshold - 1];
-
-            // average the remaining timings
-            var sum = 0;
-            for (var i = 0; i < numInThreshold; i++) {
-              sum += values[i];
-            }
-
-            mean = sum / numInThreshold;
-          }
-
-          timers[key] = [];
-
-          var message = "";
-          message += 'stats.timers.' + key + '.mean ' + mean + ' ' + ts + "\n";
-          message += 'stats.timers.' + key + '.upper ' + max + ' ' + ts + "\n";
-          message += 'stats.timers.' + key + '.upper_' + pctThreshold + ' ' + maxAtThreshold + ' ' + ts + "\n";
-          message += 'stats.timers.' + key + '.lower ' + min + ' ' + ts + "\n";
-          message += 'stats.timers.' + key + '.count ' + count + ' ' + ts + "\n";
-          statString += message;
-
-          numStats += 1;
-        }
-      }
-
-      statString += 'statsd.numStats ' + numStats + ' ' + ts + "\n";
-      
-      try {
-        var graphite = net.createConnection(config.graphitePort, config.graphiteHost);
-        graphite.addListener('error', function(connectionException){
-          if (config.debug) {
-            sys.log(connectionException);
-          }
-        });
-        graphite.on('connect', function() {
-          this.write(statString);
-          this.end();
-        });
-      } catch(e){
-        if (config.debug) {
-          sys.log(e);
-        }
-      }
-
-    }, flushInterval);
-  }
-  */
 });
 
 
