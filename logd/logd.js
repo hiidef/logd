@@ -206,7 +206,9 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     server = dgram.createSocket('udp4', function (msg, rinfo) {
       messagesReceived++;
       var blob = msgpack.unpack(msg);
-      if (config.debug) { sys.log(msg.toString()); }
+      if (config.debug) { 
+        sys.log(sys.inspect(msg)); 
+      }
 
       switch (blob.id) {
         case types.LOG:
@@ -214,11 +216,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
            * msgpack/unpack we have to do, but it allows us to always know
            * which ip sent us some information
            */
-          /* FIXME: this code results in messages i can't unpack in python
           blob.ip = rinfo.address;
-          blob.packed = msgpack.pack(blob);
-          */
-          blob.packed = msg;
           if (! logMessages[blob.path]) {
             logMessages[blob.path] = [];
           }
@@ -301,8 +299,14 @@ config.configFile(process.argv[2], function (config, oldConfig) {
         /* add the messages to the path's lists & ordered sets */
         for( ; count < messages.length; count++, next++) {
           msg = messages[count];
+          msg.id = Number(next);
+          //  https://github.com/mranney/node_redis/pull/119
+          //  fixed in 0.6.5
+          var packed = msgpack.pack(msg);
+          var bufpacked = new Buffer(packed.length);
+          packed.copy(bufpacked)
           multi
-            .set(base + ':' + next, msg.packed)
+            .set(base + ':' + next, bufpacked)
             .lpush(base, next)
             .zadd(base + ':level:' + msg.level, -msg.time, next)
             .zadd(base + ':name:' + msg.name, -msg.time, next)
