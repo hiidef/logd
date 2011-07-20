@@ -48,6 +48,10 @@ function redisConnect(config) {
 
   var client = redis.createClient(port, host, options);
 
+  client.on("end", function() {
+    sys.log("end event received from Redis client.");
+  });
+
   client.on("error", function(err) {
     sys.log("Redis error: " + err.message);
     /* if this was connection refused, lets exit */
@@ -271,8 +275,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     var logd = config.redis.prefix || 'logd';
 
     for (path in logMessages) {
-      messages = logMessages[path];
-      if (! messages.length) { continue; }
+      if (!logMessages[path] || !logMessages[path].length) continue;
 
       var base = logd + ':log:' + path;
 
@@ -280,48 +283,53 @@ config.configFile(process.argv[2], function (config, oldConfig) {
        * fetch the value for the next id from the database and add the cached
        * messages.
        */
-      redisClient.get(base + ':next', function(err, next) {
-        var count = 0;
-        var multi = redisClient.multi();
-        size = Number(config.logSize[path] || config.logSize['default']);
+      redisClient.get(base + ':next', function(base, path) {
+          return function(err, next) {
+            var messages = logMessages[path];
+            var count = 0;
+            var multi = redisClient.multi();
+            next = Number(next);
+            /* if there was no "next" setting, then this logger didn't exist yet.
+             * add it to the list of paths and give it a next val
+             */
+            if (next == null) {
+              next = 1;
+              redisClient.multi()
+                .sadd('logd:paths', path)
+                .set(base + ':next', next)
+                .exec();
+            }
 
-        /* if there was no "next" setting, then this logger didn't exist yet.
-         * add it to the list of paths and give it a next val
-         */
-        if (next == null) {
-          next = 1;
-          redisClient.multi()
-            .sadd('logd:paths', path)
-            .set(base + ':next', next)
-            .exec();
-        }
+            /* add the messages to the path's lists & ordered sets */
+            for( ; count < messages.length; count++, next++) {
+              msg = messages[count];
+              msg.id = next;
+              //  https://github.com/mranney/node_redis/pull/119
+              //  fixed in 0.6.5
+              var packed = msgpack.pack(msg);
+              //var bufpacked = new Buffer(packed.length);
+              //packed.copy(bufpacked)
+              multi
+                .set(base + ':' + next, packed)
+                .lpush(base, next)
+                .zadd(base + ':level:' + msg.level, -msg.time, next)
+                .zadd(base + ':name:' + msg.name, -msg.time, next)
+                .sadd(base + ':names', msg.name);
+            }
 
-        /* add the messages to the path's lists & ordered sets */
-        for( ; count < messages.length; count++, next++) {
-          msg = messages[count];
-          msg.id = Number(next);
-          //  https://github.com/mranney/node_redis/pull/119
-          //  fixed in 0.6.5
-          var packed = msgpack.pack(msg);
-          var bufpacked = new Buffer(packed.length);
-          packed.copy(bufpacked)
-          multi
-            .set(base + ':' + next, bufpacked)
-            .lpush(base, next)
-            .zadd(base + ':level:' + msg.level, -msg.time, next)
-            .zadd(base + ':name:' + msg.name, -msg.time, next)
-            .sadd(base + ':names', msg.name);
-        }
-
-        /* clear local cache, increment the in-redis next val, and flush */
-        multi.incrby(base + ':next', count);
-        multi.exec(redisErrback);
-        logMessages[path] = [];
-      });
+            /* clear local cache, increment the in-redis next val, and flush */
+            /*
+            if (!count) {
+              debugger;
+            }
+            */
+            multi.incrby(base + ':next', count);
+            multi.exec(redisErrback);
+            logMessages[path] = [];
+          };
+        }(base, path)
+      );
     }
-
-    /* TODO: flush counters */
-    /* TODO: flush timers */
 
   }, flushInterval);
 

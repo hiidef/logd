@@ -1,5 +1,5 @@
 {
-  "debug": true,
+  "debug": false,
   "port": 8126,
   "graphite": {
     "port": 2003,
