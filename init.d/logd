@@ -50,17 +50,17 @@ stop_logd() {
 case "$1" in
     start)
         log_daemon_msg "Starting logd" "logd"
-        start_gunicorn
+        start_logd
         ;;
 
     stop)
         log_daemon_msg "Stopping logd" "logd"
-        stop_gunicorn --oknodo
+        stop_logd --oknodo
         ;;
 
     restart|force-reload)
         log_daemon_msg "Restarting logd" "logd"
-        stop_gunicorn --oknodo --retry 30
+        stop_logd --oknodo --retry 30
         RET="$?"
         set -e
         case $RET in
@@ -77,7 +77,7 @@ case "$1" in
                 log_end_msg 1
             ;;
         esac
-        start_gunicorn
+        start_logd
         ;;
 
     *)
