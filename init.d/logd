@@ -1,0 +1,90 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          logd init
+# Required-Start:    networking
+# Required-Stop:     networking
+# Default-Start:     2 3 4 5
+# Default-Stop:      S 0 1 6
+# Short-Description: Start/stop logd.
+# Description:       Start/stop a logd daemon.
+### END INIT INFO
+
+# XXX: This script is adapted from the sample here:
+#   http://code.djangoproject.com/wiki/InitdScriptForLinux
+
+. /lib/lsb/init-functions
+
+LOGD="/usr/bin/logd.js"
+CONFIG="/etc/logd/config.js"
+LOGD_LOG="/var/log/logd.log"
+PIDFILE="/tmp/logd.pid"
+
+if test -f /etc/default/logd; then
+    . /etc/default/logd
+fi
+
+start_logd() {
+    cmd="start-stop-daemon --start --quiet --pidfile "$PIDFILE"\
+            --exec /usr/bin/node --\
+            "$LOGD" "$CONFIG" >> $LOGD_LOG 2>&1"
+    if $cmd; then
+        log_end_msg 0
+    else
+        log_end_msg 1
+    fi
+}
+
+stop_logd() {
+    cmd="start-stop-daemon --stop --quiet $* --pidfile $PIDFILE"
+    if $cmd; then
+        log_end_msg 0
+    else
+        log_end_msg 1
+    fi
+    # make sure all processes using our pidfile are really dead.
+    for pid in `ps aux |grep $PIDFILE |grep -v grep |awk '{print $2}'`; do
+        kill $pid > /dev/null 2>&1
+    done
+}
+
+case "$1" in
+    start)
+        log_daemon_msg "Starting logd" "logd"
+        start_gunicorn
+        ;;
+
+    stop)
+        log_daemon_msg "Stopping logd" "logd"
+        stop_gunicorn --oknodo
+        ;;
+
+    restart|force-reload)
+        log_daemon_msg "Restarting logd" "logd"
+        stop_gunicorn --oknodo --retry 30
+        RET="$?"
+        set -e
+        case $RET in
+            0)
+            ;;
+            1)
+                # daemon not running
+                log_progress_msg "(not running)"
+                log_end_msg 0
+            ;;
+            *)
+                # failed to stop
+                log_progress_msg "(failed to stop)"
+                log_end_msg 1
+            ;;
+        esac
+        start_gunicorn
+        ;;
+
+    *)
+        echo "Usage: $NAME {start|stop|restart|force-reload}" >&2
+        exit 3
+        ;;
+esac
+
+exit 0
+
