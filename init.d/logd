@@ -23,10 +23,13 @@ if test -f /etc/default/logd; then
     . /etc/default/logd
 fi
 
+WRAPPER="/etc/logd/wrapper.sh"
+echo "#!/bin/sh\n/usr/bin/node \"$LOGD\" \"$CONFIG\" >> \"$LOGD_LOG\" 2>&1" > $WRAPPER
+chmod a+x $WRAPPER
+
+
 start_logd() {
-    cmd="start-stop-daemon --start --quiet --pidfile "$PIDFILE"\
-            --exec /usr/bin/node --\
-            "$LOGD" "$CONFIG" >> $LOGD_LOG 2>&1"
+    cmd="start-stop-daemon --start --background --quiet --pidfile "$PIDFILE" --exec $WRAPPER"
     if $cmd; then
         log_end_msg 0
     else
