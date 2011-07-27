@@ -179,7 +179,9 @@ config.configFile(process.argv[2], function (config, oldConfig) {
   }
 
   if (config.debug) {
-    if (debugInt !== undefined) { clearInterval(debugInt); }
+    if (debugInt) { 
+      clearInterval(debugInt); 
+    }
     debugInt = setInterval(function () {
       sys.log("counters: " + sys.inspect(counters));
       sys.log("timers: " + sys.inspect(timers));
@@ -289,10 +291,11 @@ config.configFile(process.argv[2], function (config, oldConfig) {
             var count = 0;
             var multi = redisClient.multi();
             next = Number(next);
+
             /* if there was no "next" setting, then this logger didn't exist yet.
              * add it to the list of paths and give it a next val
              */
-            if (next == null) {
+            if (!next) {
               next = 1;
               redisClient.multi()
                 .sadd('logd:paths', path)
@@ -354,7 +357,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     for (key in counters) {
       var value = counters[key] / (flushInterval / 1000);
       var message = 'stats.' + key + ' ' + value + ' ' + ts + "\n";
-      message += 'stats_counts.' + key + ' ' + counters[key] + ' ' + ts + "\n";
+      message += 'stats.counts.' + key + ' ' + counters[key] + ' ' + ts + "\n";
       statString += message;
       counters[key] = 0;
 
@@ -401,7 +404,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
       }
     }
 
-    statString += 'statsd.numStats ' + numStats + ' ' + ts + "\n";
+    statString += 'stats.numStats ' + numStats + ' ' + ts + "\n";
     if (numStats) {
       if (config.debug) {
         sys.log("Sending stats string: \n" + statString);
