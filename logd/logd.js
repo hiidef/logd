@@ -173,7 +173,7 @@ function sendStats(config, stats) {
 
 /* read the config file and run the server */
 config.configFile(process.argv[2], function (config, oldConfig) {
-  if (! config.debug && debugInt) {
+  if (!config.debug && debugInt) {
     clearInterval(debugInt); 
     debugInt = false;
   }
@@ -212,6 +212,10 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     server = dgram.createSocket('udp4', function (msg, rinfo) {
       messagesReceived++;
       var blob = msgpack.unpack(msg);
+      if (!blob) { 
+        sys.log("Error with message " + msg);
+        return; 
+      }
       if (config.debug) { 
         sys.log(sys.inspect(msg)); 
       }
