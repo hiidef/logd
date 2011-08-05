@@ -96,19 +96,20 @@ function trimLogs(redisClient, config) {
           /* remove each log item from the main db and from each level, which
            * are known without fetching a list.
            */
-          sys.log("removed items: " + ret);
           var removedItems = ret[0];
           if (!removedItems) return;
           var multi = redisClient.multi();
 
           for(var j=0; j<removedItems.length; j+=2) {
-            var msg = msgpack.unpack(removedItems[i]), key = removedItems[i+1];
+            var msg = removedItems[i], key = removedItems[i+1];
+            var msgbuf = new Buffer(msg.length);
+            msgbuf.write(msg);
+            var msgobj = msgpack.unpack(msgobj)
             multi
-              .zrem(logd + ':log:' + path + ':level:' + msg.level, key)
-              .zrem(logd + ':log:' + path + ':name:' + msg.name, key)
+              .zrem(logd + ':log:' + path + ':level:' + msgobj.level, key)
+              .zrem(logd + ':log:' + path + ':name:' + msgobj.name, key)
               .del(logd + ':log:' + path + ':' + key);
           }
-          sys.log("Flushing redis keys, sample: " + logd + ':log:' + path + ':' + key);
           multi.exec(redisErrback);
       });
     }
