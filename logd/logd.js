@@ -104,7 +104,7 @@ function trimLogs(redisClient, config) {
           var multi = redisClient.multi();
 
           for(var j=0; j<removedItems.length; j+=2) {
-            var msg = removedItems[i], key = removedItems[i+1];
+            var msg = removedItems[i+1], key = removedItems[i];
             dmulti.del(logd + ':log:' + path + ':' + key);
             sys.log("Deleting " + logd + ':log:' + path + ':' + key);
             /*
