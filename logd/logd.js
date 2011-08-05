@@ -96,8 +96,8 @@ function trimLogs(redisClient, config) {
           /* remove each log item from the main db and from each level, which
            * are known without fetching a list.
            */
-          if (!removedItems) return;
           var removedItems = ret[0];
+          if (!removedItems) return;
           var multi = redisClient.multi();
 
           for(var j=0; j<removedItems.length; j+=2) {
