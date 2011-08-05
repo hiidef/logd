@@ -223,7 +223,6 @@ config.configFile(process.argv[2], function (config, oldConfig) {
      * be flushed out at a configurable interval.
      */
     server = dgram.createSocket('udp4', function (msg, rinfo) {
-      messagesReceived++;
       var blob = msgpack.unpack(msg);
       if (!blob) { 
         sys.log("Error with message " + msg);
@@ -239,6 +238,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
            * msgpack/unpack we have to do, but it allows us to always know
            * which ip sent us some information
            */
+          messagesReceived++;
           blob.ip = rinfo.address;
           if (! logMessages[blob.path]) {
             logMessages[blob.path] = [];
