@@ -107,6 +107,7 @@ function trimLogs(redisClient, config) {
               .zrem(logd + ':log:' + path + ':name:' + msg.name, key)
               .del(logd + ':log:' + path + ':' + key);
           }
+          sys.log("Flushing redis keys, sample: " + logd + ':log:' + path + ':' + key);
           multi.exec(redisErrback);
       });
     }
