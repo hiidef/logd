@@ -98,18 +98,24 @@ function trimLogs(redisClient, config) {
            */
           var removedItems = ret[0];
           if (!removedItems) return;
+          var dmulti = redisClient.multi();
           var multi = redisClient.multi();
 
           for(var j=0; j<removedItems.length; j+=2) {
             var msg = removedItems[i], key = removedItems[i+1];
-            var msgbuf = new Buffer(msg.length);
-            msgbuf.write(msg);
-            var msgobj = msgpack.unpack(msgbuf)
-            multi
-              .zrem(logd + ':log:' + path + ':level:' + msgobj.level, key)
-              .zrem(logd + ':log:' + path + ':name:' + msgobj.name, key)
-              .del(logd + ':log:' + path + ':' + key);
+            dmulti.del(logd + ':log:' + path + ':' + key);
+            try {
+              var msgbuf = new Buffer(msg.length);
+              msgbuf.write(msg);
+              var msgobj = msgpack.unpack(msgbuf);
+              multi
+                .zrem(logd + ':log:' + path + ':level:' + msgobj.level, key)
+                .zrem(logd + ':log:' + path + ':name:' + msgobj.name, key);
+            } catch(e) {
+              sys.log(e);
+            }
           }
+          dmulti.exec(redisErrback);
           multi.exec(redisErrback);
       });
     }
