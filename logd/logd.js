@@ -104,10 +104,9 @@ function trimLogs(redisClient, config) {
           var multi = redisClient.multi();
 
           for(var j=0; j<removedItems.length; j+=2) {
-            var msg = removedItems[i+1], key = removedItems[i];
+            var msg = removedItems[j], key = removedItems[j+1];
             dmulti.del(logd + ':log:' + path + ':' + key);
             sys.log("Deleting " + logd + ':log:' + path + ':' + key);
-            /*
             try {
               var msgbuf = new Buffer(msg.length);
               msgbuf.write(msg);
@@ -117,11 +116,11 @@ function trimLogs(redisClient, config) {
                 .zrem(logd + ':log:' + path + ':name:' + msgobj.name, key);
             } catch(e) {
               sys.log(e);
-            }*/
+            }
           }
           sys.log("Deleting " + removedItems.length/2 + " items");
           dmulti.exec(redisErrback);
-          // multi.exec(redisErrback);
+          multi.exec(redisErrback);
       });
     }
   });
