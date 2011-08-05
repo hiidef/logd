@@ -104,7 +104,7 @@ function trimLogs(redisClient, config) {
             var msg = removedItems[i], key = removedItems[i+1];
             var msgbuf = new Buffer(msg.length);
             msgbuf.write(msg);
-            var msgobj = msgpack.unpack(msgobj)
+            var msgobj = msgpack.unpack(msgbuf)
             multi
               .zrem(logd + ':log:' + path + ':level:' + msgobj.level, key)
               .zrem(logd + ':log:' + path + ':name:' + msgobj.name, key)
