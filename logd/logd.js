@@ -106,6 +106,7 @@ function trimLogs(redisClient, config) {
           for(var j=0; j<removedItems.length; j+=2) {
             var msg = removedItems[i], key = removedItems[i+1];
             dmulti.del(logd + ':log:' + path + ':' + key);
+            sys.log("Deleting " + logd + ':log:' + path + ':' + key);
             /*
             try {
               var msgbuf = new Buffer(msg.length);
