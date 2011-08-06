@@ -100,36 +100,24 @@ function trimLogs(redisClient, config) {
           if (!removedItems) return;
           var multi = redisClient.multi();
           var dmulti = redisClient.multi();
-          var chunk = 0;
 
           for(var j=0; j<removedItems.length; j+=2) {
             var msg = removedItems[j], key = removedItems[j+1];
             dmulti.del(logd + ':log:' + path + ':' + key);
-            sys.log("Deleting: " + logd + ':log:' + path + ':' + key);
-            chunk++;
             try {
               var msgbuf = new Buffer(msg.length);
               msgbuf.write(msg);
               var msgobj = msgpack.unpack(msgbuf);
               multi
-
-                .zrem(logd + ':log:' + path + ':name:' + msgobj.name, key);
+                .zrem(logd + ':log:' + path + ':name:' + msgobj.name, key)
+                .zrem(logd + ':log:' + path + ':level:' + msgobj.level, key);
             } catch(e) {
               sys.log(e);
             }
-            if (chunk >= 10) {
-              multi.exec(redisErrback);
-              dmulti.exec(redisErrback);
-              multi = redisClient.multi();
-              dmulti = redisClient.multi();
-              chunk = 0;
-            }
           }
           sys.log("Deleted " + removedItems.length/2 + " items from " + path);
-          if (chunk) { 
-            dmulti.exec(redisErrback);
-            multi.exec(redisErrback);
-          }
+          dmulti.exec(redisErrback);
+          multi.exec(redisErrback);
       }; }(path));
     }
   });
