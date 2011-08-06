@@ -92,7 +92,7 @@ function trimLogs(redisClient, config) {
         .sort(logd + ':log:' + path, 'BY', 'nosort', 'LIMIT', size, -1, 'GET',
               logd + ':log:' + path + ':*', 'GET', '#')
         .ltrim(logd + ':log:' + path, 0, size-1)
-        .exec(function(err, ret){ 
+        .exec(function(path) { return function(err, ret){ 
           /* remove each log item from the main db and from each level, which
            * are known without fetching a list.
            */
@@ -112,7 +112,7 @@ function trimLogs(redisClient, config) {
               msgbuf.write(msg);
               var msgobj = msgpack.unpack(msgbuf);
               multi
-                .zrem(logd + ':log:' + path + ':level:' + msgobj.level, key)
+
                 .zrem(logd + ':log:' + path + ':name:' + msgobj.name, key);
             } catch(e) {
               sys.log(e);
@@ -130,7 +130,7 @@ function trimLogs(redisClient, config) {
             dmulti.exec(redisErrback);
             multi.exec(redisErrback);
           }
-      });
+      }; }(path));
     }
   });
 }
