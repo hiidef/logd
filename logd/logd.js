@@ -56,7 +56,7 @@ function redisConnect(config) {
     sys.log("Redis error: " + err.message);
     /* if this was connection refused, lets exit */
     if (err.message.match(/ECONNREFUSED/)) {
-      process.exit(-1);
+      // process.exit(-1);
     }
   });
 
