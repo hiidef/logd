@@ -44,7 +44,7 @@ Create a new config file with the proper settings for your local setup.  You
 will need redis (and, eventually, graphite) running.
 
 Because of the way logd expires old log messages (see technical details section),
-you are encouraged to use `maxmemory-policy volatile-ttl` and a sane `maxmemory`
+you are encouraged to use ``maxmemory-policy volatile-ttl`` and a sane ``maxmemory``
 value for your redis server to keep from using all available memory if your logs
 get high traffic or have low cutoff points.
 
@@ -165,9 +165,9 @@ logfile.  This way, multiple applications can log to logd.
 Once in a while (by default 10s), logd will truncate the main list of messages 
 to the configured maximum size and flush deleted messages from the database and
 the other filtered sets.  Because of difficulties we've had getting redis to
-reclaim the space evacuated by `del`-ed keys, the way this works is different
+reclaim the space evacuated by ``del``-ed keys, the way this works is different
 now.  Keys that fall off the edge of the log size are given an expiry (1 day),
-and you are encouraged to use a newer version of redis with `maxmemory-policy`
-set to `volatile-ttl` and a reasonable `maxmemory` value to ensure your redis
+and you are encouraged to use a newer version of redis with ``maxmemory-policy``
+set to ``volatile-ttl`` and a reasonable ``maxmemory`` value to ensure your redis
 server does not run out of memory.
 
