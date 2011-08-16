@@ -62,21 +62,21 @@ called `pylogd`_.
 stats types
 -----------
 
-The three basic types of stats are `timers`, `meters`, and `counters`.  Their
-operation is slightly different but they provide most of what you might want
-to record.
+The three basic types of stats are ``timers``, ``meters``, and ``counters``.
+Their operation is slightly different but they provide most of what you might
+want to record.
 
 timers
 ******
 
 Timers accumulate timed data, then saves top-90, mean, et al values at the
-flush interval.  They are identical to `statsd`'s notion of timers, and are
+flush interval.  They are identical to ``statsd``'s notion of timers, and are
 good when you want to record how long operations take.
 
 meters
 ******
 
-Meters are a concept not present in `statsd`.  They are for storing and viewing
+Meters are a concept not present in ``statsd``.  They are for storing and viewing
 the fluctuations of some particular value over time, such as the amt of free
 memory or the size of a queue.  Unlike counters, meters tell you approximately
 what the value of something was at a given time.  A count is still taken and
@@ -86,7 +86,7 @@ need to alter the sample rate.
 counters
 ********
 
-Counters are identical to counters in `statsd`.  Increment or decrement them at
+Counters are identical to counters in ``statsd``.  Increment or decrement them at
 will, they are accumulated by logd and then the mean over the flush interval is
 taken and sent to logd.  They are usful when you want to know how many events
 of a given type are happening per second, like requests or logins.
