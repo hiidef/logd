@@ -12,6 +12,7 @@ var types = Object.freeze({
   COUNTER: 2,
   TIMER: 3,
   DELETE_LOG: 4,
+  METER: 5,
 });
 
 var levels = Object.freeze({
@@ -27,6 +28,8 @@ var messagesReceivedPrev = 0;
 var logMessages = {};
 var counters = {};
 var timers = {};
+var meters = {};
+
 var debugInt, flushInt, logInt, trimInt, statsInt, server;
 
 
@@ -259,6 +262,19 @@ config.configFile(process.argv[2], function (config, oldConfig) {
           break;
         case types.DELETE_LOG:
           deleteLog(redisClient, blob.path);
+          break;
+        case types.METER:
+          /* note that because of the nature of meters, although a sample rate
+           * is a valid thing to send along with it, we don't need to know what
+           * it was;  we're taking a mean over the values we receive, not based
+           * on the number of received readings over a time period.
+           */
+          if (!meters[blob.key]) {
+            meters[blob.key] = {count: 0, total: 0}
+          }
+          meters[blob.key].count++;
+          meters[blob.key].total += blob.value;
+
         default: break;
       }
     });
@@ -368,6 +384,12 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     var numStats = 0;
     var key;
 
+    /* counters generally increment monotonically over a period of time, and
+     * are useful for counting the number of events of a given type that are
+     * happening each second.  The mean is taken over the course of the
+     * interval to be charted, with the counter getting the full value (ie
+     * the total number of events over the interval).
+     */
     for (key in counters) {
       var value = counters[key] / (flushInterval / 1000);
       var message = 'stats.' + key + ' ' + value + ' ' + ts + "\n";
@@ -377,6 +399,37 @@ config.configFile(process.argv[2], function (config, oldConfig) {
 
       numStats += 1;
     }
+
+    /* meters are statistics which record the given level of some value over
+     * time.  They are different from counters in that they are not designed
+     * for counting events but for keeping track of particular values, such
+     * as the size of a queue or the number of available resources.
+     */
+
+    for (key in meters) {
+      var value;
+      /* unlike the counters, take the mean of the meter values over the period
+       * based on the number of readings rather than the number of seconds
+       */
+      if (!meters[key].count) {
+        value = 0;
+      } else {
+        value = meters[key].total / meters[key].count;
+      }
+      var message =  'stats.meters.' + key + ' ' + value + ' ' + ts + "\n";
+      message += 'stats.mcounts.' + key + ' ' + meters[key].count + ' ' + ts + "\n";
+      statString += message;
+
+      meters[key].count = 0;
+      meters[key].total = 0;
+
+      numStats += 1;
+    }
+
+    /* timers are specifically for storing duration data for certain critical
+     * sections or operations.  They are stored in graphite with some
+     * additional pre-calculated statistical values like mean, percentiles, etc
+     */
 
     for (key in timers) {
       if (timers[key].length > 0) {
