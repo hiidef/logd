@@ -1,25 +1,22 @@
+/* logd is a modification of etsy's statsd that also records log messages.
+ * logd stats and messages are sent via a simple protocol that's encoded using
+ * msgpack.
+ */
+
 var dgram  = require('dgram')
   , sys    = require('sys')
   , net    = require('net')
   , msgpack = require('msgpack')
   , config = require('./config')
-  , redis  = require('redis')
+  , mongodb = require('mongodb');
 
-/* enums for message types and message levels */
+/* enums for message types */
 
 var types = Object.freeze({
   LOG: 1,
   COUNTER: 2,
   TIMER: 3,
   DELETE_LOG: 4,
-});
-
-var levels = Object.freeze({
-  DEBUG: 10,
-  INFO: 20,
-  WARNING: 30,
-  ERROR: 40,
-  FATAL: 50
 });
 
 var messagesReceived = 0;
@@ -29,11 +26,22 @@ var counters = {};
 var timers = {};
 var debugInt, flushInt, logInt, trimInt, statsInt, server;
 
+function mongoConnect(config) {
+  var port = Number(config.mongo.port || 2222),
+      host = config.mongo.host || "localhost",
+      dbname = config.mongo.db || "logd",
+      options = config.mongo.options || { native_parser: true};
 
-function redisErrback(err, ret) {
-  if (err) {
-    sys.log("redis error: " + err);
-  }
+  var server = new mongodb.Server(host, port, {});
+  var handle = new mongodb.Db(dbname, server, options);
+
+  handle.open(function(err, db) {
+    db.collection("_meta", function(err, collection) {
+
+    });
+  });
+
+  return handle;
 }
 
 /* Connect to redis, using the configuration options provided, falling
