@@ -5,9 +5,10 @@ Logd is a system for centralized logging and data collection written in node
 with client libraries in node and python.  Its architecture and stats
 collection is heavily based off of `statsd`_, but it uses a simple, flexible
 binary wire protocol (via `msgpack`_) and is more easily extended to support
-new message types.  Logd persists its log messages to `redis`_, but the plan
-is to be more or less consistent with `statsd`_ by logging statistics to
-`graphite`_.
+new message types.  Logd persists its log messages to `redis`_, but tries
+to be consistent with `statsd`_ by logging statistics to `graphite`_.  Using
+the log aspect of logd is not required;  you should be able to run logd without
+running a redis server.
 
 .. _statsd: https://github.com/etsy/statsd
 .. _msgpack: http://msgpack.org/
@@ -42,6 +43,11 @@ To run logd, simply use node to run logd/logd.js:
 Create a new config file with the proper settings for your local setup.  You
 will need redis (and, eventually, graphite) running.
 
+Because of the way logd expires old log messages (see technical details section),
+you are encouraged to use ``maxmemory-policy volatile-ttl`` and a sane ``maxmemory``
+value for your redis server to keep from using all available memory if your logs
+get high traffic or have low cutoff points.
+
 using logd
 ----------
 
@@ -53,8 +59,44 @@ called `pylogd`_.
 .. _logdweb: https://github.com/hiidef/logdweb
 .. _pylogd: https://github.com/hiidef/pylogd
 
-data formats
-~~~~~~~~~~~~
+stats types
+-----------
+
+The three basic types of stats are ``timers``, ``meters``, and ``counters``.
+Their operation is slightly different but they provide most of what you might
+want to record.
+
+timers
+******
+
+Timers accumulate timed data, then saves top-90, mean, et al values at the
+flush interval.  They are identical to ``statsd``'s notion of timers, and are
+good when you want to record how long operations take.
+
+meters
+******
+
+Meters are a concept not present in ``statsd``.  They are for storing and viewing
+the fluctuations of some particular value over time, such as the amt of free
+memory or the size of a queue.  Unlike counters, meters tell you approximately
+what the value of something was at a given time.  A count is still taken and
+stored, but its purpose is mostly so you can keep track of whether or not you
+need to alter the sample rate.
+
+counters
+********
+
+Counters are identical to counters in ``statsd``.  Increment or decrement them at
+will, they are accumulated by logd and then the mean over the flush interval is
+taken and sent to logd.  They are usful when you want to know how many events
+of a given type are happening per second, like requests or logins.
+
+
+technical details
+-----------------
+
+If you think node is not ready for production or want to write your own logd
+daemon, here are some details on logd's behavior.
 
 log messages
 ************
@@ -69,14 +111,6 @@ The logd data format must contain at least::
         name: (str),
         time: (double),
     }
-
-Log Levels:
-
-* 10: debug
-* 20: info
-* 30: warning
-* 40: error
-* 50: fatal
 
 counters
 ********
@@ -101,6 +135,18 @@ The timer format::
         value: (double),
     }
 
+meters
+******
+
+The meter format::
+
+    {
+        id: 5,
+        key: (str),
+        value: (double),
+        sampleRate: (int -- optional, ignored)
+    }
+
 logd redis data layout
 ----------------------
 
@@ -116,7 +162,12 @@ logfile.  This way, multiple applications can log to logd.
 * ``logd:log:{path}:name:{name}`` - zset of messages per logger
 * ``logd:log:{path}:names`` - a set of loggers seen on this path
 
-Once in a while (how long?), logd will truncate the main list of messages to
-the configured maximum size and flush deleted messages from the database and
-the other filtered sets.
+Once in a while (by default 10s), logd will truncate the main list of messages 
+to the configured maximum size and flush deleted messages from the database and
+the other filtered sets.  Because of difficulties we've had getting redis to
+reclaim the space evacuated by ``del``-ed keys, the way this works is different
+now.  Keys that fall off the edge of the log size are given an expiry (1 day),
+and you are encouraged to use a newer version of redis with ``maxmemory-policy``
+set to ``volatile-ttl`` and a reasonable ``maxmemory`` value to ensure your redis
+server does not run out of memory.
 
