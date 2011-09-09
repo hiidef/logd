@@ -30,14 +30,58 @@ var meters = {};
 
 var debugInt, flushInt, logInt, trimInt, statsInt, server;
 
-function mongoConnect(config) {
-  var port = Number(config.mongo.port || 2222),
-      host = config.mongo.host || "localhost",
-      dbname = config.mongo.db || "logd",
-      options = config.mongo.options || { native_parser: true};
+/* Encapsulate a connection to MongoDB using our configuration.
+ *
+ * This will start up, create any dbs that we might need, and store handles
+ * to each of the collections that we might have to deal with.
+ */
 
-  var server = new mongodb.Server(host, port, {});
-  var handle = new mongodb.Db(dbname, server, options);
+var MongoConnection = function(config) {
+  var self = this;
+
+  self.port = Number(config.mongo.port || 2222);
+  self.host = config.mongo.host || "localhost";
+  self.dbname = config.mongo.db || "logd";
+  self.options = config.mongo.options || { native_parser: true};
+
+  self.server = new mongodbServer(host, port, {});
+  self.handle = new mongodb.Db(dbname, server, options);
+
+  self.configCollection = null;
+  self.logCollections = {}
+  
+  /* create collections for use in logd */
+  self.create_collections = function() {
+    async.parallel([
+      function(callback) {
+        self.db.createCollection('config', function(err, collection) {
+          self.configCollection = collection;
+          callback(null, collection);
+        });
+      },
+      function(callback) {
+        self.db.createCollection('messages'
+        
+      }
+    ]);
+  };
+
+  /* create the connection to the database and set in motion the
+   * initialization process.
+   */
+  self.handle.open(function(err, db) {
+    self.db = db;
+    self.create_collections();
+  });
+
+
+};
+
+sys.inherits(MongoConnection, process.EventEmitter);
+
+function mongoConnect(config) {
+  var mongo = MongoConnection(config);
+
 
   handle.open(function(err, db) {
     db.collection("_meta", function(err, collection) {
