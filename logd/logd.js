@@ -3,11 +3,12 @@
  * msgpack.
  */
 
-var dgram  = require('dgram')
-  , sys    = require('sys')
-  , net    = require('net')
+var dgram   = require('dgram')
+  , sys     = require('sys')
+  , net     = require('net')
   , msgpack = require('msgpack')
-  , config = require('./config')
+  , config  = require('./config')
+  , async   = require('async')
   , mongodb = require('mongodb');
 
 /* enums for message types */

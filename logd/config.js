@@ -1,6 +1,13 @@
+/* logd configuration reader
+ *
+ * based on statsd's configuration reader, which handles automatic config
+ * reload on file changes.
+ */
+
 var fs  = require('fs')
   , sys = require('sys')
   , vm = require('vm')
+  , color = require('./colored');
 
 var Configurator = function (file) {
 
@@ -9,7 +16,8 @@ var Configurator = function (file) {
   var oldConfig = {};
   
   if (typeof file == 'undefined') {
-    throw new Error('You must pass in a config file to logd.');
+    console.log(color.red("Error") + ": you must pass a config file path to logd.");
+    process.exit();
   }
 
   this.updateConfig = function () {
