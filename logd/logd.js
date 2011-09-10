@@ -39,41 +39,60 @@ var debugInt, flushInt, logInt, trimInt, statsInt, server;
 var MongoConnection = function(config) {
   var self = this;
 
-  self.port = Number(config.mongo.port || 2222);
+  self.port = Number(config.mongo.port || mongodb.Connection.DEFAULT_PORT);
   self.host = config.mongo.host || "localhost";
   self.dbname = config.mongo.db || "logd";
   self.options = config.mongo.options || { native_parser: true};
 
-  self.server = new mongodbServer(host, port, {});
-  self.handle = new mongodb.Db(dbname, server, options);
+  self.server = new mongodb.Server(host, port, {});
+  self.db = new mongodb.Db(dbname, server, options);
 
-  self.configCollection = null;
+  self.configCollection = new mongodb.Collection(self.db, "config");
   self.logCollections = {}
+
+  self.defaultCallback = function(err, data) {
+    if (err) {
+      console.log("Error: " + sys.inspect(err));
+    }
+  };
   
+  self.addLogFile = function(filename) {
+    if (!(filename in self.logCollections)) {
+      self.configCollection.update({'name': 'logfiles'}, {
+        $addToSet : { value: filename }
+      }, self.defaultCallback);
+    }
+  };
+
   /* create collections for use in logd */
-  self.create_collections = function() {
-    async.parallel([
-      function(callback) {
-        self.db.createCollection('config', function(err, collection) {
-          self.configCollection = collection;
-          callback(null, collection);
+  self.initConfig = function() {
+    self.configCollection.createIndex("name", self.defaultCallback);
+    self.db.createCollection('config', function(err, collection) {
+      self.configCollection = collection;
+      /* ensure we have an index on 'name' to make looking up configs easy */
+      collection.createIndex('name', self.defaultCallback);
+      /* inspect the 'logfiles' config value, which is a list */
+      collection.findOne({'name': 'logfiles'}, function(err, cursor) {
+        cursor.toArray(function(err, docs) {
+          sys.log(sys.inspect(docs));
         });
-      },
-      function(callback) {
-        self.db.createCollection('messages'
-        
-      }
-    ]);
+      });
+    });
   };
 
   /* create the connection to the database and set in motion the
    * initialization process.
    */
-  self.handle.open(function(err, db) {
-    self.db = db;
-    self.create_collections();
-  });
+  self.connect = function() {
+    self.db.open(function(err, db) {
+      self.initConfig();
+    });
+  };
 
+  self.db.on("close", function(err) {
+    console.log("Connection to mongo was closed: " + err);
+    self.connect();    
+  });
 
 };
 
@@ -81,15 +100,6 @@ sys.inherits(MongoConnection, process.EventEmitter);
 
 function mongoConnect(config) {
   var mongo = MongoConnection(config);
-
-
-  handle.open(function(err, db) {
-    db.collection("_meta", function(err, collection) {
-
-    });
-  });
-
-  return handle;
 }
 
 /* Connect to redis, using the configuration options provided, falling
