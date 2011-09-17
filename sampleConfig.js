@@ -5,13 +5,14 @@
     "port": 2003,
     "host": "localhost"
   },
-  "redis": {
-    "port": 6379,
-    "host": "localhost",
-    "prefix": "logd"
+  "mongo" : {
+    "host": "localhost", 
   },
-  "logSize": {
-    "default": 100000
+  "logs": {
+    "default": {
+      "size": 262144000,
+      "max": 1000000,
+    }
   }
 }
 

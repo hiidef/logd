@@ -12,6 +12,8 @@
  *   - mongodb has capped collections built in, which simplifies logd
  *   - mongodb has in-mem speed and durability on par with redis
  *   - mongodb will allow us to issue ad hoc queries against logfiles
+ *   - mongodb capped collections have a natural order equivalent to the
+ *     insertion order
  */
 
 var mongodb = require("mongodb")
@@ -43,7 +45,6 @@ var MongoConnection = function(config) {
   self.db = new mongodb.Db(self.dbname, self.server, self.options);
  
   self.connect = function() {
-    sys.log("Connecting to mongodb.");
     self.db.open(function(err, db) {
       sys.log("Connected to mongodb.");
       self.emit("connect", db);
@@ -67,35 +68,7 @@ var MongoConnection = function(config) {
     }
   };
   
-  self.addLogFile = function(filename) {
-    /*
-    if (!(filename in self.logCollections)) {
-      self.configCollection.update({'name': 'logfiles'}, {
-        $addToSet : { value: filename }
-      }, self.defaultCallback);
-    }*/
-  };
-
-  /* create collections for use in logd */
-  self.initConfig = function() {
-    
-    //self.configCollection.createIndex("name", self.defaultCallback);
-    /* create the collection "config"
-    self.db.createCollection('config', function(err, collection) {
-      self.configCollection = collection;
-      
-      collection.createIndex('name', self.defaultCallback);
-
-      collection.findOne({'name': 'logfiles'}, function(err, cursor) {
-        cursor.toArray(function(err, docs) {
-          sys.log(sys.inspect(docs));
-        });
-      });
-    });*/
-  };
-  
   self.db.on("close", self.print);
-
   self.connect();
 };
 
@@ -106,7 +79,7 @@ sys.inherits(MongoConnection, process.EventEmitter);
 var Store = function(config) {
   var self = this;
   
-  var storeConfig = config || {};
+  self.storeConfig = config || {};
 
   /* establish some data that will be filled in upon initialization */
 
@@ -129,14 +102,14 @@ var Store = function(config) {
       function(callback) {
         self.getLogFiles(function(paths) {
           paths.forEach(function(p) {
-            self.logFiles[p] = new mongodbCollection(self.db, p);
+            self.logFiles[p] = new mongodb.Collection(self.db, p);
           });
           callback(null, paths);
         });
       },
       /* create the config index */
       function(callback) {
-        self.config.createIndex("name", function() {
+        self.config.ensureIndex("name", function() {
           callback(null, "index");
         });
       }
@@ -159,8 +132,45 @@ var Store = function(config) {
   };
 
   /* create a log file if it isn't already created */
-  self.createLog = function(name, callback) {
+  self.createLog = function(name, options, callback) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    callback = args.pop();
+    options = args.length ? args.shift() : null;
 
+    if (self.logFiles.hasOwnProperty(name)) {
+      callback(null, []);
+    } else {
+      /* if no options were passed, cook up some defaults */
+      if (options === null) {
+        var key;
+        options = {capped: true};
+        for (key in self.storeConfig.logs) {
+          if (self.storeConfig.logs.hasOwnProperty(key)) {
+            options[key] = self.storeConfig.logs[key];
+          }
+        }
+      } else if (!options.hasOwnProperty("capped")) {
+        options.capped = true;
+      }
+      
+      /* create the collection & configs */
+      async.parallel([
+        function(c) {
+          /* create the collection */
+          self.db.createCollection(name, options, function(e,collection) {
+            self.logFiles[name] = collection;
+            collection.ensureIndex(["id", "level"], function() {
+              c(null, null);
+            });
+          });
+        },
+        function(c) {
+          /* add the path to the config */
+          self.config.insert({name: name, options: options}, function() {
+            c(null, null);
+          });
+      }], callback);
+    }
   };
 
   /* delete a log file if it exists */
@@ -169,23 +179,39 @@ var Store = function(config) {
       async.parallel([
         function(c) {
           /* remove the collection */
-          self.db.deleteCollection(name, function() {
+          self.db.dropCollection(name, function() {
+            delete self.logFiles[name];
             c(null, null);
           });
         },
         function(c) {
           /* remove the log file's configuration */
-          self.config.remove({name: name}, function() {
+          self.config.remove({name: 'file:' + name}, function() {
             c(null, null);
           });
-        }, callback]);
+        }], callback);
     } else {
       callback(null, []);
     }
   };
 
+  /* append lines to a log, returns the number of items appended */
+  self.appendLog = function(file, lines, callback) {
+    /* if this log doesn't exist, create it w/ defaults */
+    if (!self.logFiles.hasOwnProperty(file)) {
+      self.createLog(file, function() {
+        self.appendLog(file, lines, callback);
+      });
+    } else {
+      var collection = self.logFiles[file];
+      collection.insertAll(lines);
+      if (typeof(callback) !== "undefined") {
+        callback(lines.length);
+      };
+    }
+  };
 
-  self.mongo = new MongoConnection(storeConfig.mongo || {});
+  self.mongo = new MongoConnection(self.storeConfig.mongo || {});
   self.mongo.on("connect", self.initStore);
 
 };
