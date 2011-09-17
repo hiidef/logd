@@ -1,5 +1,5 @@
 (function(){
-
+  var name;
   var colors = {
         black: 30,
         red: 31,
@@ -24,21 +24,25 @@
   function defineColoredFn(name, code) {
     if(process && process.isTTY && !process.isTTY()) {
       exports[name] = function(str) {
-        return (str || this)
-      }
+        return (str || this);
+      };
     } else {
       exports[name] = function(str) {
         return esc(code) + (str || this) + esc(extras.reset);
-      }
+      };
     }
   }
 
-  for(var name in colors) {
-    defineColoredFn(name, colors[name]);
-  };
+  for(name in colors) { 
+      if (colors.hasOwnProperty(name)) {
+        defineColoredFn(name, colors[name]);
+      }
+  }
 
-  for(var name in extras) {
-    defineColoredFn(name, extras[name])
-  };
+  for(name in extras) { 
+      if (extras.hasOwnProperty(name)) {
+      defineColoredFn(name, extras[name]);
+    }
+  }
 
-})();
+}());
