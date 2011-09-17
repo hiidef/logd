@@ -15,7 +15,7 @@ var Configurator = function (file) {
   var config = {};
   var oldConfig = {};
   
-  if (typeof file == 'undefined') {
+  if (typeof file === 'undefined') {
     console.log(color.red("Error") + ": you must pass a config file path to logd.");
     process.exit();
   }
@@ -35,7 +35,7 @@ var Configurator = function (file) {
   this.updateConfig();
 
   fs.watchFile(file, function (curr, prev) {
-    if (curr.ino != prev.ino) { self.updateConfig(); }
+    if (curr.ino !== prev.ino) { self.updateConfig(); }
   });
 };
 
