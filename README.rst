@@ -1,32 +1,32 @@
 logd
 ----
 
-Logd is a system for centralized logging and data collection written in node
-with client libraries in node and python.  Its architecture and stats
-collection is heavily based off of `statsd`_, but it uses a simple, flexible
-binary wire protocol (via `msgpack`_) and is more easily extended to support
-new message types.  Logd persists its log messages to `redis`_, but tries
-to be consistent with `statsd`_ by logging statistics to `graphite`_.  Using
-the log aspect of logd is not required;  you should be able to run logd without
-running a redis server.
+Logd is a system for centralized logging and data collection written in
+javascript for nodejs.  It started as a fork off of `statsd`_, but is not
+strictly compatible with it.  Logd uses a simple, flexible binary wire 
+protocol (via `msgpack`_) and is more easily extended to support new message
+types.  Logd sends log messages to `mongodb`_ and stats to `graphite`_.  
+Neither aspect of logd is required to run the other;  you can run logs 
+without setting up graphite and stats without setting up mongo.
 
 .. _statsd: https://github.com/etsy/statsd
 .. _msgpack: http://msgpack.org/
 .. _redis: http://redis.io
 .. _graphite: http://graphite.wikidot.com/quickstart-guide
+.. _mongodb: http://mongodb.org
 
 installing
 ----------
 
-logd requires `nodejs`_ v0.4 or higher, and the ``node-msgpack`` and ``redis``
-extensions.  It is suggested that you also install ``hiredis`` as this will
-significantly improve redis performance.
+logd requires `nodejs`_ v0.4 or higher, and the ``msgpack-0.4`` and 
+``mongodb`` (node-mongo-native) packages.  It is recommended that you compile
+the native bson parser.
 
 On OSX, ``brew install node`` should install a usable version.  After 
 installing node, you should also install `npm`_ via the instructions on their
-site.  Currently (2011-07-11), the version of the msgpack library available
-in npm's registry is outdated and will not build against new versions of node.
-Install a version from a fork that contains patches to fix it:
+site.  The original ``msgpack`` library for node does not compile against
+new versions of node and is unmaintained.  If you are having trouble
+installing msgpack, install it from jmars' repos::
 
 ``npm install https://github.com/jmars/node-msgpack/tarball/master``
 
@@ -40,13 +40,7 @@ To run logd, simply use node to run logd/logd.js:
 
 ``node logd/logdjs sampleConfig.js``
 
-Create a new config file with the proper settings for your local setup.  You
-will need redis (and, eventually, graphite) running.
-
-Because of the way logd expires old log messages (see technical details section),
-you are encouraged to use ``maxmemory-policy volatile-ttl`` and a sane ``maxmemory``
-value for your redis server to keep from using all available memory if your logs
-get high traffic or have low cutoff points.
+Create a new config file with the proper settings for your local setup. 
 
 using logd
 ----------
@@ -54,7 +48,7 @@ using logd
 There is an official web frontend for logd called `logdweb`_.
 
 There is an official python interface for logd's logging and statsd-style stats
-called `pylogd`_.
+called `pylogd`_, which also ships with twisted modules.
 
 .. _logdweb: https://github.com/hiidef/logdweb
 .. _pylogd: https://github.com/hiidef/pylogd
@@ -146,28 +140,4 @@ The meter format::
         value: (double),
         sampleRate: (int -- optional, ignored)
     }
-
-logd redis data layout
-----------------------
-
-Logd will use a configurable key prefix (default: "logd") for all of its redis
-keys.  Logs can be separated by "path", which should be what you'd name your
-logfile.  This way, multiple applications can log to logd.
-
-* ``logd:paths`` - a set of paths
-* ``logd:log:{path}:{id}`` - msg data (packed)
-* ``logd:log:{path}`` - ordered list of all messages
-* ``logd:log:{path}:next`` - next id of message for this path
-* ``logd:log:{path}:level:{level}`` - zset of messages per level (5)
-* ``logd:log:{path}:name:{name}`` - zset of messages per logger
-* ``logd:log:{path}:names`` - a set of loggers seen on this path
-
-Once in a while (by default 10s), logd will truncate the main list of messages 
-to the configured maximum size and flush deleted messages from the database and
-the other filtered sets.  Because of difficulties we've had getting redis to
-reclaim the space evacuated by ``del``-ed keys, the way this works is different
-now.  Keys that fall off the edge of the log size are given an expiry (1 day),
-and you are encouraged to use a newer version of redis with ``maxmemory-policy``
-set to ``volatile-ttl`` and a reasonable ``maxmemory`` value to ensure your redis
-server does not run out of memory.
 
