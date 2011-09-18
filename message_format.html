@@ -1,0 +1,162 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Message Format &mdash; logd v1.0 documentation</title>
+    <link rel="stylesheet" href="_static/logd.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="logd v1.0 documentation" href="index.html" />
+    <link rel="prev" title="Configuration" href="configuration.html" />
+   
+  <link href="http://fonts.googleapis.com/css?family=Cabin" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+  
+  
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="configuration.html" title="Configuration"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">logd v1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="message-format">
+<h1>Message Format<a class="headerlink" href="#message-format" title="Permalink to this headline">¶</a></h1>
+<p>Below the message format for log messages &amp; stats are described.  If you&#8217;d like
+to write a client to send messages and stats to logd in your preferred
+programming language, the information in this document should suffice.</p>
+<p>If you&#8217;d like to write a <cite>server</cite> to replace the javascript implementation of
+logd (maybe you cannot get nodejs into production at your workplace), it&#8217;s
+recommended that you read this document and then look at the source in logd
+to make sure your stats handling is compatible.</p>
+<div class="section" id="protocol">
+<h2>protocol<a class="headerlink" href="#protocol" title="Permalink to this headline">¶</a></h2>
+<p>Logd&#8217;s messages are packed with <a class="reference external" href="http://msgpack.org/">msgpack</a>, which is similar to json,
+but is a binary protocol rather than a text one, and is both a bit faster to
+parse and smaller to transmit.</p>
+<p>Each of the different messages carry with it an <tt class="docutils literal"><span class="pre">id</span></tt> which denotes the type
+of message.  The rest of the message is considered the payload and is different
+for each message type:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="nx">log</span><span class="o">:</span> <span class="mi">1</span>
+<span class="nx">counter</span><span class="o">:</span> <span class="mi">2</span>
+<span class="nx">timer</span><span class="o">:</span> <span class="mi">3</span>
+<span class="nx">meter</span><span class="o">:</span> <span class="mi">4</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="log-messages">
+<h2>log messages<a class="headerlink" href="#log-messages" title="Permalink to this headline">¶</a></h2>
+<p>Log messages have an <tt class="docutils literal"><span class="pre">id</span></tt> of 1 and are expected to contain at least:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="nx">id</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="nx">path</span><span class="o">:</span> <span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+    <span class="nx">level</span><span class="o">:</span> <span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+    <span class="nx">msg</span><span class="o">:</span> <span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+    <span class="nx">name</span><span class="o">:</span> <span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+    <span class="nx">time</span><span class="o">:</span> <span class="p">(</span><span class="kr">double</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">path</span></tt> parameter should denote the &#8220;log file&#8221; that this message is
+intended for.  The <tt class="docutils literal"><span class="pre">level</span></tt> can be anything, but is generally something like
+&#8220;debug&#8221;, &#8220;info&#8221;, or &#8220;critical&#8221;.  <tt class="docutils literal"><span class="pre">msg</span></tt> is the log message.  <tt class="docutils literal"><span class="pre">name</span></tt> is the
+name of the logger;  this can be a file path, or the name of the library, or
+ignored;  but it must be included in the message.  <tt class="docutils literal"><span class="pre">time</span></tt> should be a unix
+timestamp.</p>
+</div>
+<div class="section" id="counters">
+<h2>counters<a class="headerlink" href="#counters" title="Permalink to this headline">¶</a></h2>
+<p>Counters, like all stats, require a <tt class="docutils literal"><span class="pre">key</span></tt> and a <tt class="docutils literal"><span class="pre">value</span></tt>.  The <tt class="docutils literal"><span class="pre">key</span></tt>
+becomes the stats bucket in graphite:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="nx">id</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="nx">key</span><span class="o">:</span> <span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+    <span class="nx">value</span><span class="o">:</span> <span class="p">(</span><span class="kr">int</span><span class="p">),</span>
+    <span class="p">[</span><span class="nx">sampleRate</span><span class="p">]</span><span class="o">:</span> <span class="p">(</span><span class="kr">int</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">sampleRate</span></tt> parameter is optional, but if provided, it will be used
+to compensate for the value when they are flushed.  For instance, if a
+sample rate of <tt class="docutils literal"><span class="pre">20</span></tt> is given, that is assumed to be <tt class="docutils literal"><span class="pre">20%</span></tt>, and the value
+for that counter will be multiplied by <tt class="docutils literal"><span class="pre">100/20</span></tt> (or <tt class="docutils literal"><span class="pre">5</span></tt>).</p>
+</div>
+<div class="section" id="timers">
+<h2>timers<a class="headerlink" href="#timers" title="Permalink to this headline">¶</a></h2>
+<p>The timer format:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="nx">id</span><span class="o">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="nx">key</span><span class="o">:</span> <span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+    <span class="nx">value</span><span class="o">:</span> <span class="p">(</span><span class="kr">double</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Timers do not take <tt class="docutils literal"><span class="pre">sampleRates</span></tt>, and their <tt class="docutils literal"><span class="pre">value</span></tt> is in seconds.</p>
+</div>
+<div class="section" id="meters">
+<h2>meters<a class="headerlink" href="#meters" title="Permalink to this headline">¶</a></h2>
+<p>The meter format:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+    <span class="nx">id</span><span class="o">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="nx">key</span><span class="o">:</span> <span class="p">(</span><span class="nb">String</span><span class="p">),</span>
+    <span class="nx">value</span><span class="o">:</span> <span class="p">(</span><span class="kr">double</span><span class="p">),</span>
+    <span class="p">[</span><span class="nx">sampleRate</span><span class="p">]</span><span class="o">:</span> <span class="p">(</span><span class="kr">int</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">sampleRate</span></tt> again is optional, but even if it is provided it does not
+have any measurable impact on the meter&#8217;s value.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+  
+    <a href="http://github.com/hiidef/logd"><img style="position: fixed; top: 0; right: 0; border: 0;"
+    src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+  
+
+  
+  
+  <div id="footer-search">
+    <form class="search" action="search.html" method="GET">
+      <input type="search" name="q" /> <input type="submit" value="search" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+  </div>
+
+  </body>
+</html>

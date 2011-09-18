@@ -1,0 +1,191 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Configuration &mdash; logd v1.0 documentation</title>
+    <link rel="stylesheet" href="_static/logd.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="logd v1.0 documentation" href="index.html" />
+    <link rel="next" title="Message Format" href="message_format.html" />
+    <link rel="prev" title="Concepts" href="concepts.html" />
+   
+  <link href="http://fonts.googleapis.com/css?family=Cabin" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+  
+  
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="message_format.html" title="Message Format"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="concepts.html" title="Concepts"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">logd v1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="configuration">
+<h1>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h1>
+<p>Logd ships with a sample configuration file, but because its config file is
+in JSON format and JSON cannot have inline comments, there is no inline
+documentation on the available options.</p>
+<div class="section" id="sample">
+<h2>Sample<a class="headerlink" href="#sample" title="Permalink to this headline">¶</a></h2>
+<p>Here&#8217;s the <tt class="docutils literal"><span class="pre">sampleConfig.js</span></tt> file included within the distribution:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
+  <span class="s2">&quot;debug&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="s2">&quot;port&quot;</span><span class="o">:</span> <span class="mi">8126</span><span class="p">,</span>
+  <span class="s2">&quot;graphite&quot;</span><span class="o">:</span> <span class="p">{</span>
+    <span class="s2">&quot;port&quot;</span><span class="o">:</span> <span class="mi">2003</span><span class="p">,</span>
+    <span class="s2">&quot;host&quot;</span><span class="o">:</span> <span class="s2">&quot;localhost&quot;</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;mongo&quot;</span> <span class="o">:</span> <span class="p">{</span>
+    <span class="s2">&quot;host&quot;</span><span class="o">:</span> <span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;logs&quot;</span><span class="o">:</span> <span class="p">{</span>
+    <span class="s2">&quot;default&quot;</span><span class="o">:</span> <span class="p">{</span>
+      <span class="s2">&quot;size&quot;</span><span class="o">:</span> <span class="mi">262144000</span><span class="p">,</span>
+      <span class="s2">&quot;max&quot;</span><span class="o">:</span> <span class="mi">1000000</span><span class="p">,</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="global-options">
+<h2>Global options<a class="headerlink" href="#global-options" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>debug</strong>: boolean, when <tt class="docutils literal"><span class="pre">true</span></tt> it enables an extra periodic status message
+useful for debugging logd.</li>
+<li><strong>port</strong>: the numeric port for logd to listen on.  The default port for logd
+is <tt class="docutils literal"><span class="pre">8126</span></tt>, which is one more than the default port for statsd.</li>
+<li><strong>percentThreshold</strong>: the percentile you want calculated on
+<a class="reference internal" href="concepts.html#timers"><em>timers</em></a>.  The default is <tt class="docutils literal"><span class="pre">90</span></tt>.</li>
+</ul>
+<div class="section" id="intervals">
+<h3>intervals<a class="headerlink" href="#intervals" title="Permalink to this headline">¶</a></h3>
+<p>Logd is completely event driven, but it caches log messages and stats for a
+period before flushing them out to the backends.  These intervals should be
+integers and are in terms of msecs.</p>
+<ul class="simple">
+<li><strong>debugInterval</strong>: the interval at which debug info is printed, default:
+<tt class="docutils literal"><span class="pre">10000</span></tt> (10s)</li>
+<li><strong>flushInterval</strong>: the interval at which logs are flushed to mongodb,
+default: <tt class="docutils literal"><span class="pre">1000</span></tt> (1s)</li>
+<li><strong>statsInterval</strong>: the interval at which stats are sent to graphite,
+default: <tt class="docutils literal"><span class="pre">10000</span></tt> (10s).  This should not be different from the granularity
+set up in graphite;  if the smallest time period for saving stats in graphite
+is 5s, this should be 5s as well.</li>
+<li><strong>logInterval</strong>: the interval at which logd prints its own activity,
+default: <tt class="docutils literal"><span class="pre">1000</span></tt>.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="graphite">
+<h2>Graphite<a class="headerlink" href="#graphite" title="Permalink to this headline">¶</a></h2>
+<p>Graphite is configured by an object in the <tt class="docutils literal"><span class="pre">graphite</span></tt> configuration key.
+If absent, a warning is printed, and the following defaults are used:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="s2">&quot;graphite&quot;</span><span class="o">:</span> <span class="p">{</span>
+  <span class="nx">port</span><span class="o">:</span> <span class="mi">2003</span><span class="p">,</span>
+  <span class="nx">host</span><span class="o">:</span> <span class="s2">&quot;localhost&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>port</strong>: the port that the <tt class="docutils literal"><span class="pre">carbon-cache.py</span></tt> daemon is running on</li>
+<li><strong>host</strong>: the host that the <tt class="docutils literal"><span class="pre">carbon-cache.py</span></tt> daemon is running on</li>
+</ul>
+</div>
+<div class="section" id="mongodb">
+<h2>MongoDB<a class="headerlink" href="#mongodb" title="Permalink to this headline">¶</a></h2>
+<p>MongoDB is configured by an object in the <tt class="docutils literal"><span class="pre">mongo</span></tt> configuration key.  If
+absent, the following defaults are used:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="s2">&quot;mongo&quot;</span><span class="o">:</span> <span class="p">{</span>
+  <span class="nx">port</span><span class="o">:</span> <span class="mi">27017</span><span class="p">,</span>
+  <span class="nx">host</span><span class="o">:</span> <span class="s2">&quot;localhost&quot;</span>
+  <span class="nx">db</span><span class="o">:</span> <span class="s2">&quot;logd&quot;</span><span class="p">,</span>
+  <span class="nx">options</span><span class="o">:</span> <span class="p">{</span>
+    <span class="nx">native_parser</span><span class="o">:</span> <span class="kc">true</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>port</strong>: the port MongoDB is running on</li>
+<li><strong>host</strong>: the host MongoDB is running on.  Note that logd collections are
+capped, and cannot be sharded across hosts.</li>
+<li><strong>db</strong>: the database name logd should store its logs in</li>
+<li><strong>options</strong>: a configuration object to pass to <tt class="docutils literal"><span class="pre">mongodb.Db</span></tt>;  If absent
+the <tt class="docutils literal"><span class="pre">native_parser</span></tt> from the node-mongo-native library will be turned on.
+Provided for users who might need or want to turn off the <tt class="docutils literal"><span class="pre">native_parser</span></tt>.</li>
+</ul>
+</div>
+<div class="section" id="log-configuration">
+<span id="id1"></span><h2>Log Configuration<a class="headerlink" href="#log-configuration" title="Permalink to this headline">¶</a></h2>
+<p>The log section is an object that contains a key for every log path and options
+for that log path.  The special key <tt class="docutils literal"><span class="pre">default</span></tt> is applied for new logs who are
+not specifically configured.  If <tt class="docutils literal"><span class="pre">default</span></tt> is absent, it is set to:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="s2">&quot;default&quot;</span><span class="o">:</span> <span class="p">{</span>
+  <span class="nx">size</span><span class="o">:</span> <span class="mi">26144000</span><span class="p">,</span>
+  <span class="nx">max</span><span class="o">:</span> <span class="mi">1000000</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><strong>size</strong>: the maximum size in bytes for this log file</li>
+<li><strong>max</strong>: the maximum number of records to save for this log file</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+  
+    <a href="http://github.com/hiidef/logd"><img style="position: fixed; top: 0; right: 0; border: 0;"
+    src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+  
+
+  
+  
+  <div id="footer-search">
+    <form class="search" action="search.html" method="GET">
+      <input type="search" name="q" /> <input type="submit" value="search" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+  </div>
+
+  </body>
+</html>

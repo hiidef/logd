@@ -1,77 +1,159 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset='utf-8'>
 
-  <title>hiidef/logd @ GitHub</title>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-  <style type="text/css">
-    body {
-      margin-top: 1.0em;
-      background-color: #406257;
-      font-family: Helvetica, Arial, FreeSans, san-serif;
-      color: #ffffff;
-    }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-    h1 { font-size: 3.8em; color: #bf9da8; margin-bottom: 3px; }
-    h1 .small { font-size: 0.4em; }
-    h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #bf9da8; }
-    h3 { text-align: center; color: #bf9da8; }
-    a { color: #bf9da8; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-    pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
-  </style>
-</head>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>logd &mdash; logd v1.0 documentation</title>
+    <link rel="stylesheet" href="_static/logd.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="logd v1.0 documentation" href="#" />
+    <link rel="next" title="Concepts" href="concepts.html" />
+   
+  <link href="http://fonts.googleapis.com/css?family=Cabin" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+  
+  
+  <div class=indexwrapper>
+  
 
-<body>
-  <a href="http://github.com/hiidef/logd"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
-
-  <div id="container">
-
-    <div class="download">
-      <a href="http://github.com/hiidef/logd/zipball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/zip.png"></a>
-      <a href="http://github.com/hiidef/logd/tarball/master">
-        <img border="0" width="90" src="http://github.com/images/modules/download/tar.png"></a>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="concepts.html" title="Concepts"
+             accesskey="N">next</a> |</li>
+        <li><a href="#">logd v1.0 documentation</a> &raquo;</li> 
+      </ul>
     </div>
 
-    <h1><a href="http://github.com/hiidef/logd">logd</a>
-      <span class="small">by <a href="http://github.com/hiidef">hiidef</a></span></h1>
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="logd">
+<h1>logd<a class="headerlink" href="#logd" title="Permalink to this headline">¶</a></h1>
+<p>logd is a centralized logging &amp; statistics server written in javascript for
+nodejs.  It started as a fork off of <a class="reference external" href="https://github.com/etsy/statsd">statsd</a>, but does not maintain strict
+compatibility.  Logd uses a simple, flexible <a class="reference internal" href="message_format.html"><em>binary wire
+protocol</em></a> over UDP, and is more easily extended to support
+new message types.  Logd sends log messages to <a class="reference external" href="http://mongodb.org">mongodb</a> and stats to
+<a class="reference external" href="http://graphite.wikidot.com/quickstart-guide">graphite</a>.  Neither aspect of logd is required to run the other;  you can
+run logs without setting up graphite and stats without setting up mongo.</p>
+<div class="section" id="installing">
+<h2>Installing<a class="headerlink" href="#installing" title="Permalink to this headline">¶</a></h2>
+<p>logd requires <a class="reference external" href="http://nodejs.org">nodejs</a> v0.4 or higher, and the <tt class="docutils literal"><span class="pre">msgpack-0.4</span></tt> and
+<tt class="docutils literal"><span class="pre">mongodb</span></tt> (node-mongo-native) packages.  It is recommended that you compile
+the native bson parser.</p>
+<p>On OSX, <tt class="docutils literal"><span class="pre">brew</span> <span class="pre">install</span> <span class="pre">node</span></tt> should install a usable version;  on most
+linuxes, you will want to compile your own.  After installing node, you should
+also install <a class="reference external" href="http://npmjs.org">npm</a>.  The original <tt class="docutils literal"><span class="pre">msgpack</span></tt> library for node does not
+compile against new versions of node and is unmaintained.  If you are having
+trouble installing <tt class="docutils literal"><span class="pre">msgpack-0.4</span></tt>, install it from jmars&#8217; repos:</p>
+<div class="highlight-bash"><div class="highlight"><pre>npm install https://github.com/jmars/node-msgpack/tarball/master
+</pre></div>
+</div>
+<p>After installing the required components, attempt to run logd to check your
+setup, and then look at the <a class="reference internal" href="configuration.html"><em>configuration options</em></a>.</p>
+</div>
+<div class="section" id="deploying">
+<h2>Deploying<a class="headerlink" href="#deploying" title="Permalink to this headline">¶</a></h2>
+<p>To run logd in the foreground, simply use node to run logd/logd.js:</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span class="nx">node</span> <span class="nx">logd</span><span class="o">/</span><span class="nx">logdjs</span> <span class="nx">sampleConfig</span><span class="p">.</span><span class="nx">js</span>
+</pre></div>
+</div>
+<p>To run as a daemon, logd ships with a simple init script.  You can override
+the following paths in <tt class="docutils literal"><span class="pre">/etc/default/logd</span></tt> to point to the locations where
+you&#8217;ve decided to install logd:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span class="nv">LOGD</span><span class="o">=</span><span class="s2">&quot;/usr/bin/logd.js&quot;</span>
+<span class="nv">CONFIG</span><span class="o">=</span><span class="s2">&quot;/etc/logd/config.js&quot;</span>
+<span class="nv">LOGD_LOG</span><span class="o">=</span><span class="s2">&quot;/var/log/logd.log&quot;</span>
+<span class="nv">PIDFILE</span><span class="o">=</span><span class="s2">&quot;/tmp/logd.pid&quot;</span>
+</pre></div>
+</div>
+<p>Keep in mind that <tt class="docutils literal"><span class="pre">npm</span></tt> will not install support packages globally by
+default, and <tt class="docutils literal"><span class="pre">logd.js</span></tt> will have to run from wherever its <tt class="docutils literal"><span class="pre">node_modules</span></tt>
+support directory is.</p>
+</div>
+<div class="section" id="using-logd">
+<h2>Using logd<a class="headerlink" href="#using-logd" title="Permalink to this headline">¶</a></h2>
+<p>There is an official web frontend for logd called <a class="reference external" href="https://github.com/hiidef/logdweb">logdweb</a>.  It presents a
+basic web front-end to logd&#8217;s logs and stats, grouping stats together based
+on their <a class="reference internal" href="concepts.html#buckets"><em>bucket</em></a> names.</p>
+<p>There is an official python library for integration with logd&#8217;s logging and
+stats called <a class="reference external" href="https://github.com/hiidef/pylogd">pylogd</a>, which also ships with twisted modules.</p>
+</div>
+<div class="section" id="further-documentation">
+<h2>Further documentation<a class="headerlink" href="#further-documentation" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#logs">Logs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#stats">Stats</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#sample">Sample</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#global-options">Global options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#graphite">Graphite</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#mongodb">MongoDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#log-configuration">Log Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="message_format.html">Message Format</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="message_format.html#protocol">protocol</a></li>
+<li class="toctree-l2"><a class="reference internal" href="message_format.html#log-messages">log messages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="message_format.html#counters">counters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="message_format.html#timers">timers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="message_format.html#meters">meters</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
 
-    <div class="description">
-      log & stats daemon
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
     </div>
-
-    <h2>Authors</h2>
-<p>Jason Moiron (jmoiron@jmoiron.net)<br/><br/>      </p>
-<h2>Contact</h2>
-<p>HiiDef Inc (jason@hiidef.com)<br/>      </p>
-
-
-    <h2>Download</h2>
-    <p>
-      You can download this project in either
-      <a href="http://github.com/hiidef/logd/zipball/master">zip</a> or
-      <a href="http://github.com/hiidef/logd/tarball/master">tar</a> formats.
-    </p>
-    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
-      by running:
-      <pre>$ git clone git://github.com/hiidef/logd</pre>
-    </p>
-
-    <div class="footer">
-      get the source code on GitHub : <a href="http://github.com/hiidef/logd">hiidef/logd</a>
-    </div>
-
-  </div>
+  
+    <a href="http://github.com/hiidef/logd"><img style="position: fixed; top: 0; right: 0; border: 0;"
+    src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+  
 
   
-</body>
+  </div>
+  
+  
+  <div id="footer-search">
+    <form class="search" action="search.html" method="GET">
+      <input type="search" name="q" /> <input type="submit" value="search" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+  </div>
+
+  </body>
 </html>

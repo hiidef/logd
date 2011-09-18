@@ -1,0 +1,121 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Concepts &mdash; logd v1.0 documentation</title>
+    <link rel="stylesheet" href="_static/logd.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="logd v1.0 documentation" href="index.html" />
+    <link rel="next" title="Configuration" href="configuration.html" />
+    <link rel="prev" title="logd" href="index.html" />
+   
+  <link href="http://fonts.googleapis.com/css?family=Cabin" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+  
+  
+
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="configuration.html" title="Configuration"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="logd"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">logd v1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="concepts">
+<h1>Concepts<a class="headerlink" href="#concepts" title="Permalink to this headline">¶</a></h1>
+<p>Here a few of the underlying concepts of logd.</p>
+<div class="section" id="logs">
+<h2>Logs<a class="headerlink" href="#logs" title="Permalink to this headline">¶</a></h2>
+<p>logd attempts to not break too many of the conventions of an on-fs log.
+Logs all get a <tt class="docutils literal"><span class="pre">path</span></tt>, which is just a name that can include any
+characters legal for a mongo collection, and they can have associated
+<a class="reference internal" href="configuration.html#log-configuration"><em>configuration</em></a> options like the maximum size in
+bytes and lines.</p>
+</div>
+<div class="section" id="stats">
+<h2>Stats<a class="headerlink" href="#stats" title="Permalink to this headline">¶</a></h2>
+<p>The three basic types of stats are <tt class="docutils literal"><span class="pre">counters</span></tt>, <tt class="docutils literal"><span class="pre">timers</span></tt>, and <tt class="docutils literal"><span class="pre">meters</span></tt>.
+They work differently, and each is useful to track different types of
+performance characteristics.</p>
+<p id="buckets">Stats are kept in <tt class="docutils literal"><span class="pre">buckets</span></tt>.  A <tt class="docutils literal"><span class="pre">bucket</span></tt> is just a name for a stat,
+and it becomes the location of that stat on the graphite server.  The standard
+logd stat viewer, <a class="reference external" href="https://github.com/hiidef/logdweb">logdweb</a> will utilize common parts of a bucket to group
+charts together on a page, or group stats together in a chart.  Refer to its
+documentation for more details on bucket names.</p>
+<div class="section" id="counters">
+<h3>counters<a class="headerlink" href="#counters" title="Permalink to this headline">¶</a></h3>
+<p>Counters increment (or decrement, or change-by) a single integer in a bucket.
+After the flush interval, the counter is divided by the duration of the flush
+period and sent to graphite.  Counters measure the <cite>rate</cite> at which certain
+events happen;  their values are always &#8220;per second.&#8221;</p>
+</div>
+<div class="section" id="timers">
+<span id="id1"></span><h3>timers<a class="headerlink" href="#timers" title="Permalink to this headline">¶</a></h3>
+<p>Timers accumulate timed data, then save top-90th-percentile, mean, min, and
+max values accumulated over the flush interval.  They record how long things
+take.</p>
+</div>
+<div class="section" id="meters">
+<h3>meters<a class="headerlink" href="#meters" title="Permalink to this headline">¶</a></h3>
+<p>Meters are a concept not present in <tt class="docutils literal"><span class="pre">statsd</span></tt>.  Meters simply store a value
+in logd, which then gets flushed out to graphite.  Meters measure a specific
+value over time, and are good for measurements that do not involve <cite>rates</cite>,
+like memory usage, queue size, etc.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+  
+    <a href="http://github.com/hiidef/logd"><img style="position: fixed; top: 0; right: 0; border: 0;"
+    src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+  
+
+  
+  
+  <div id="footer-search">
+    <form class="search" action="search.html" method="GET">
+      <input type="search" name="q" /> <input type="submit" value="search" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+  </div>
+
+  </body>
+</html>
