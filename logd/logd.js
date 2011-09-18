@@ -73,7 +73,7 @@ function cleanConfig(config) {
 
   config.debugInterval = Number(config.debugInterval) || 10000;
   config.flushInterval = Number(config.flushInterval) || 1000;
-  config.statsInterval = Number(config.statsInterval) || 1000;
+  config.statsInterval = Number(config.statsInterval) || 10000;
   config.logInterval = Number(config.logInterval) || 1000;
 
   config.percentThreshold = Number(config.percentThreshold) || 90;
@@ -196,7 +196,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     if (logsReceived !== logsReceivedPrev) {
       dmsg = logsReceived - logsReceivedPrev;
       logsReceivedPrev = logsReceived;
-      sys.log("Received " + dmsg + " messages in 1s (" + logsReceived + " total).");
+      sys.log("Received " + dmsg + " messages in " + (logInterval/1000).parseInt() + "s (" + logsReceived + " total).");
     }
   }, config.logInterval);
 
