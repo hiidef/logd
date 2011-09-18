@@ -8,3 +8,4 @@ dist
 *.swp
 *.swo
 tags
+docs/_build/
