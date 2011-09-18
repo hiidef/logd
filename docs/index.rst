@@ -8,13 +8,13 @@
 logd
 ====
 
-logd is a centralized logging & statistics server written in
-javascript for nodejs.  It started as a fork off of `statsd`_, but is not
-strictly compatible with it.  Logd uses a simple, flexible binary wire 
-protocol (via `msgpack`_) and is more easily extended to support new message
-types.  Logd sends log messages to `mongodb`_ and stats to `graphite`_.  
-Neither aspect of logd is required to run the other;  you can run logs 
-without setting up graphite and stats without setting up mongo.
+logd is a centralized logging & statistics server written in javascript for 
+nodejs.  It started as a fork off of `statsd`_, but does not maintain strict 
+compatibility.  Logd uses a simple, flexible :doc:`binary wire 
+protocol <message_format>` over UDP, and is more easily extended to support 
+new message types.  Logd sends log messages to `mongodb`_ and stats to 
+`graphite`_.  Neither aspect of logd is required to run the other;  you can 
+run logs without setting up graphite and stats without setting up mongo.
 
 .. _statsd: https://github.com/etsy/statsd
 .. _msgpack: http://msgpack.org/
@@ -29,19 +29,18 @@ logd requires `nodejs`_ v0.4 or higher, and the ``msgpack-0.4`` and
 ``mongodb`` (node-mongo-native) packages.  It is recommended that you compile
 the native bson parser.
 
-
-On OSX, ``brew install node`` should install a usable version.  After 
-installing node, you should also install `npm`_ via the instructions on their
-site.  The original ``msgpack`` library for node does not compile against
-new versions of node and is unmaintained.  If you are having trouble
-installing ``msgpack-0.4``, install it from jmars' repos:
+On OSX, ``brew install node`` should install a usable version;  on most
+linuxes, you will want to compile your own.  After installing node, you should
+also install `npm`_.  The original ``msgpack`` library for node does not 
+compile against new versions of node and is unmaintained.  If you are having
+trouble installing ``msgpack-0.4``, install it from jmars' repos:
 
 .. code-block:: bash
 
     npm install https://github.com/jmars/node-msgpack/tarball/master
 
-After installing the required components, attempt to run logd before going
-deeper into :doc:`configuration`.
+After installing the required components, attempt to run logd to check your
+setup, and then look at the :doc:`configuration options<configuration>`.
 
 .. _nodejs: http://nodejs.org
 .. _npm: http://npmjs.org
@@ -49,8 +48,7 @@ deeper into :doc:`configuration`.
 Deploying
 ---------
 
-To run logd in the foreground (for testing), simply use node to run 
-logd/logd.js::
+To run logd in the foreground, simply use node to run logd/logd.js::
 
     node logd/logdjs sampleConfig.js
 
@@ -91,6 +89,5 @@ Further documentation
     concepts
     configuration
     message_format
-
 
 

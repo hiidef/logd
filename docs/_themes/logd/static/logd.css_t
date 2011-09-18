@@ -13,13 +13,17 @@
 {% set link_color="#276eda" %}
 {% set heading_color="#fa023c" %}
 {% set tt_color="black" %}
+{# fonts #}
+{% set body_font="'Myriad Web', 'Helvetica Neue', 'Helvetica', 'Arial', sans" %}
+{% set header_font="Cabin, Verdana, sans" %}
+{% set monofont="'Consolas', 'Menlo', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;" %}
 
 @import url("basic.css");
  
 /* -- page layout ----------------------------------------------------------- */
  
 body {
-    font-family: 'Alike', 'Georgia', 'Garamond', serif;
+    font-family: {{ body_font }};
     font-size: 15px;
     color: #000;
     background: white;
@@ -35,6 +39,11 @@ div.documentwrapper {
 div.bodywrapper {
     margin: 40px auto 0 auto;
     width: 700px;
+    border-radius: 5px;
+    border: 1px solid #eee;
+    background: white;
+    padding-bottom: 3em;
+    margin-bottom 1em;
 }
 
 hr {
@@ -99,7 +108,7 @@ div.body h3,
 div.body h4,
 div.body h5,
 div.body h6 {
-    font-family: 'Alice', 'Garamond', 'Georgia', serif;
+    font-family: {{ header_font }};
     font-weight: normal;
     margin: 30px 0px 10px 0px;
     color: #1C140D;
@@ -111,6 +120,11 @@ div.body h2,
 div.body h3, 
 div.body h4 {
     color: {{ heading_color }};
+}
+
+body {
+    background: #fbfbfb;
+    padding-bottom: 2em;
 }
 
 {% if html_logo %}
@@ -133,7 +147,11 @@ div.body h3 { font-size: 130%; }
 div.body h4 { font-size: 120%; }
 div.body h5 { font-size: 100%; }
 div.body h6 { font-size: 100%; }
- 
+
+.simple li {
+    margin-bottom: 5px;
+}
+
 a.headerlink {
     color: white;
     padding: 0 4px;
@@ -158,7 +176,7 @@ div.admonition {
 }
 
 div.admonition p.admonition-title {
-    font-family: 'Alice', 'Garamond', 'Georgia', serif;
+    font-family: {{ header_font }};
     font-weight: normal;
     font-size: 24px;
     margin: 0 0 10px 0;
@@ -206,7 +224,7 @@ p.admonition-title:after {
 }
 
 pre, tt {
-    font-family: 'Consolas', 'Menlo', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
+    font-family: {{ mono_font }};
     font-size: 0.85em;
 }
 
@@ -309,7 +327,7 @@ a:hover tt {
 .internal em { font-style: normal; }
 
 div.related ul {
-    font-family: "Alice", "Georgia", serif;
+    font-family: {{ body_font }};
     width: 700px;
     color: #aaa;
     margin: 0 auto;
@@ -328,7 +346,7 @@ div.related ul a:hover {
     width: 700px;
     margin: 0 auto;
     text-align: center;
-    margin-top: -2em;
+    margin-top: -4em;
     margin-bottom: 3em;
 }
 
