@@ -218,7 +218,7 @@ var Store = function(config) {
         /* update the "loggers" in the config */
         var collection = self.logFiles[name];
         collection.distinct('name', function(e,d) {
-          self.config.update({'name': name}, {'$set': {'logfiles': d}});
+          self.config.update({'name': name}, {'$set': {'loggers': d}});
         });
       }
     }
