@@ -18,8 +18,8 @@ var types = Object.freeze({
   LOG: 1,
   COUNTER: 2,
   TIMER: 3,
-  DELETE_LOG: 4,
-  METER: 5,
+  METER: 4,
+  DELETE_LOG: 1000,
 });
 
 var logsReceived = 0;
@@ -75,6 +75,7 @@ function cleanConfig(config) {
   config.flushInterval = Number(config.flushInterval) || 1000;
   config.statsInterval = Number(config.statsInterval) || 10000;
   config.logInterval = Number(config.logInterval) || 1000;
+  config.updateInterval = (1000 * 90);
 
   config.percentThreshold = Number(config.percentThreshold) || 90;
 
@@ -163,9 +164,6 @@ config.configFile(process.argv[2], function (config, oldConfig) {
           }
           timers[blob.key].push(blob.value);
           break;
-        case types.DELETE_LOG:
-          deleteLog(store, blob.path);
-          break;
         case types.METER:
           /* note that because of the nature of meters, although a sample rate
            * is a valid thing to send along with it, we don't need to know what
@@ -177,6 +175,9 @@ config.configFile(process.argv[2], function (config, oldConfig) {
           }
           meters[blob.key].count++;
           meters[blob.key].total += blob.value;
+          break;
+        case types.DELETE_LOG:
+          deleteLog(store, blob.path);
           break;
         default: 
           break;
@@ -199,6 +200,14 @@ config.configFile(process.argv[2], function (config, oldConfig) {
       sys.log("Received " + dmsg + " messages in " + (logInterval/1000).parseInt() + "s (" + logsReceived + " total).");
     }
   }, config.logInterval);
+
+  /* every so often, update the mongo config with aggregate data about
+   * each log.
+   */
+
+  updateInt = setInterval(function() {
+    store.updateAggregates();
+  }, config.updateInterval);
 
   /* every flushInterval (default: 1s), flush local messages to the datastore */
 

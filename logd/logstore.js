@@ -211,6 +211,19 @@ var Store = function(config) {
     }
   };
 
+  self.updateAggregates = function() {
+    var name;
+    for(name in self.logFiles) {
+      if(self.logFiles.hasOwnProperty(name)) {
+        /* update the "loggers" in the config */
+        var collection = self.logFiles[name];
+        collection.distinct('name', function(e,d) {
+          self.config.update({'name': name}, {'$set': {'logfiles': d}});
+        });
+      }
+    }
+  };
+
   self.mongo = new MongoConnection(self.storeConfig.mongo || {});
   self.mongo.on("connect", self.initStore);
 
