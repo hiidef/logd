@@ -197,7 +197,8 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     if (logsReceived !== logsReceivedPrev) {
       dmsg = logsReceived - logsReceivedPrev;
       logsReceivedPrev = logsReceived;
-      sys.log("Received " + dmsg + " messages in " + (logInterval/1000).parseInt() + "s (" + logsReceived + " total).");
+      interval = Number(config.logInterval / 1000)
+      sys.log("Received " + dmsg + " messages in " + interval + "s (" + logsReceived + " total).");
     }
   }, config.logInterval);
 
