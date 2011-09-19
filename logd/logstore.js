@@ -21,6 +21,16 @@ var mongodb = require("mongodb")
   , async   = require("async");
 
 
+function extend(o1, o2) {
+  var o2key;
+  for (o2key in o2) {
+    if (o2.hasOwnProperty(o2key)) {
+      o1[o2key] = o2[o2key];
+    }
+  }
+  return o1;
+}
+
 /* A wrapper around a MongoDB connection to define our own events or
  * catch and handle ones that should be dealt with in a standard manner.
  * 
@@ -144,10 +154,10 @@ var Store = function(config) {
       if (options === null) {
         var key;
         options = {capped: true};
-        for (key in self.storeConfig.logs) {
-          if (self.storeConfig.logs.hasOwnProperty(key)) {
-            options[key] = self.storeConfig.logs[key];
-          }
+        if (self.storeConfig.logs.hasOwnProperty(name)) {
+          options = extend(options, self.storeConfig.logs[name]);
+        } else {
+          options = extend(options, self.storeConfig.logs['default']);
         }
       } else if (!options.hasOwnProperty("capped")) {
         options.capped = true;
@@ -159,8 +169,10 @@ var Store = function(config) {
           /* create the collection */
           self.db.createCollection(name, options, function(e,collection) {
             self.logFiles[name] = collection;
-            collection.ensureIndex(["id", "level"], function() {
-              c(null, null);
+            collection.ensureIndex(["_id", "level", "name"], function() {
+              collection.ensureIndex(["msg"], function() {
+                c(null, null);
+              });
             });
           });
         },
@@ -207,19 +219,24 @@ var Store = function(config) {
       collection.insertAll(lines);
       if (typeof(callback) !== "undefined") {
         callback(lines.length);
-      };
+      }
     }
   };
 
   self.updateAggregates = function() {
     var name;
+
+    var updater = function(name) {
+      return function(e, d) {
+        self.config.update({'name': name}, {'$set': {'loggers': d}});
+      };
+    };
+
     for(name in self.logFiles) {
       if(self.logFiles.hasOwnProperty(name)) {
         /* update the "loggers" in the config */
         var collection = self.logFiles[name];
-        collection.distinct('name', function(e,d) {
-          self.config.update({'name': name}, {'$set': {'loggers': d}});
-        });
+        collection.distinct('name', updater(name));
       }
     }
   };

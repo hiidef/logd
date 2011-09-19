@@ -208,6 +208,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
 
   updateInt = setInterval(function() {
     store.updateAggregates();
+    sys.log("Updated store aggregates.");
   }, config.updateInterval);
 
   /* every flushInterval (default: 1s), flush local messages to the datastore */
