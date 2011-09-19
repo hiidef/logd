@@ -12,14 +12,14 @@ logd (maybe you cannot get nodejs into production at your workplace), it's
 recommended that you read this document and then look at the source in logd
 to make sure your stats handling is compatible.
 
-protocol
+Protocol
 --------
 
 Logd's messages are packed with `msgpack`_, which is similar to json,
 but is a binary protocol rather than a text one, and is both a bit faster to
 parse and smaller to transmit.
 
-Each of the different messages carry with it an ``id`` which denotes the type
+Each of the different messages carry with an ``id`` which denotes the type
 of message.  The rest of the message is considered the payload and is different
 for each message type::
 
@@ -28,9 +28,12 @@ for each message type::
     timer: 3
     meter: 4
 
+The messages are described below as they'd appear in a JSON document, but they
+should be encoded with a msgpack encoder and sent via UDP over the wire.
+
 .. _msgpack: http://msgpack.org/
 
-log messages
+Log messages
 ------------
 
 Log messages have an ``id`` of 1 and are expected to contain at least::
@@ -52,7 +55,7 @@ ignored;  but it must be included in the message.  ``time`` should be a unix
 timestamp.
 
 
-counters
+Counters
 --------
 
 Counters, like all stats, require a ``key`` and a ``value``.  The ``key``
@@ -70,7 +73,7 @@ to compensate for the value when they are flushed.  For instance, if a
 sample rate of ``20`` is given, that is assumed to be ``20%``, and the value
 for that counter will be multiplied by ``100/20`` (or ``5``).
 
-timers
+Timers
 ------
     
 The timer format::
@@ -83,7 +86,7 @@ The timer format::
 
 Timers do not take ``sampleRates``, and their ``value`` is in seconds.
 
-meters
+Meters
 ------
 
 The meter format::

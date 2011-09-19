@@ -58,11 +58,11 @@ logd (maybe you cannot get nodejs into production at your workplace), it&#8217;s
 recommended that you read this document and then look at the source in logd
 to make sure your stats handling is compatible.</p>
 <div class="section" id="protocol">
-<h2>protocol<a class="headerlink" href="#protocol" title="Permalink to this headline">¶</a></h2>
+<h2>Protocol<a class="headerlink" href="#protocol" title="Permalink to this headline">¶</a></h2>
 <p>Logd&#8217;s messages are packed with <a class="reference external" href="http://msgpack.org/">msgpack</a>, which is similar to json,
 but is a binary protocol rather than a text one, and is both a bit faster to
 parse and smaller to transmit.</p>
-<p>Each of the different messages carry with it an <tt class="docutils literal"><span class="pre">id</span></tt> which denotes the type
+<p>Each of the different messages carry with an <tt class="docutils literal"><span class="pre">id</span></tt> which denotes the type
 of message.  The rest of the message is considered the payload and is different
 for each message type:</p>
 <div class="highlight-javascript"><div class="highlight"><pre><span class="nx">log</span><span class="o">:</span> <span class="mi">1</span>
@@ -71,9 +71,11 @@ for each message type:</p>
 <span class="nx">meter</span><span class="o">:</span> <span class="mi">4</span>
 </pre></div>
 </div>
+<p>The messages are described below as they&#8217;d appear in a JSON document, but they
+should be encoded with a msgpack encoder and sent via UDP over the wire.</p>
 </div>
 <div class="section" id="log-messages">
-<h2>log messages<a class="headerlink" href="#log-messages" title="Permalink to this headline">¶</a></h2>
+<h2>Log messages<a class="headerlink" href="#log-messages" title="Permalink to this headline">¶</a></h2>
 <p>Log messages have an <tt class="docutils literal"><span class="pre">id</span></tt> of 1 and are expected to contain at least:</p>
 <div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
     <span class="nx">id</span><span class="o">:</span> <span class="mi">1</span><span class="p">,</span>
@@ -93,7 +95,7 @@ ignored;  but it must be included in the message.  <tt class="docutils literal">
 timestamp.</p>
 </div>
 <div class="section" id="counters">
-<h2>counters<a class="headerlink" href="#counters" title="Permalink to this headline">¶</a></h2>
+<h2>Counters<a class="headerlink" href="#counters" title="Permalink to this headline">¶</a></h2>
 <p>Counters, like all stats, require a <tt class="docutils literal"><span class="pre">key</span></tt> and a <tt class="docutils literal"><span class="pre">value</span></tt>.  The <tt class="docutils literal"><span class="pre">key</span></tt>
 becomes the stats bucket in graphite:</p>
 <div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
@@ -110,7 +112,7 @@ sample rate of <tt class="docutils literal"><span class="pre">20</span></tt> is 
 for that counter will be multiplied by <tt class="docutils literal"><span class="pre">100/20</span></tt> (or <tt class="docutils literal"><span class="pre">5</span></tt>).</p>
 </div>
 <div class="section" id="timers">
-<h2>timers<a class="headerlink" href="#timers" title="Permalink to this headline">¶</a></h2>
+<h2>Timers<a class="headerlink" href="#timers" title="Permalink to this headline">¶</a></h2>
 <p>The timer format:</p>
 <div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
     <span class="nx">id</span><span class="o">:</span> <span class="mi">3</span><span class="p">,</span>
@@ -122,7 +124,7 @@ for that counter will be multiplied by <tt class="docutils literal"><span class=
 <p>Timers do not take <tt class="docutils literal"><span class="pre">sampleRates</span></tt>, and their <tt class="docutils literal"><span class="pre">value</span></tt> is in seconds.</p>
 </div>
 <div class="section" id="meters">
-<h2>meters<a class="headerlink" href="#meters" title="Permalink to this headline">¶</a></h2>
+<h2>Meters<a class="headerlink" href="#meters" title="Permalink to this headline">¶</a></h2>
 <p>The meter format:</p>
 <div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
     <span class="nx">id</span><span class="o">:</span> <span class="mi">4</span><span class="p">,</span>
