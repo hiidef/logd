@@ -107,10 +107,8 @@ var Store = function(config) {
       for (colname in self.logFiles) {
         if (self.logFiles.hasOwnProperty(colname)) {
           var collection = self.logFiles[colname];
-          collection.ensureIndex(["_id", "level", "name"], function() {
-            collection.ensureIndex(["msg"], function() {
-            });
-          });
+          collection.ensureIndex(["_id", "level", "name"], function() {});
+          collection.ensureIndex(["msg"], function() {});
         }
       }
       self.emit("setup", self);
