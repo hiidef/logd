@@ -142,12 +142,16 @@ config.configFile(process.argv[2], function (config, oldConfig) {
            * msgpack/unpack we have to do, but it allows us to always know
            * which ip sent us some information
            */
+          var path = blob.path;
           logsReceived++;
           blob.ip = rinfo.address;
           if (! logMessages[blob.path]) {
             logMessages[blob.path] = [];
           }
-          logMessages[blob.path].push(blob);
+          delete blob.id;
+          delete blob.path;
+          logMessages[path].push(blob);
+
           break;
         case types.COUNTER:
           /* statsd like counter */
