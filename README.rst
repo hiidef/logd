@@ -11,7 +11,6 @@ without setting up graphite and stats without setting up mongo.
 
 .. _statsd: https://github.com/etsy/statsd
 .. _msgpack: http://msgpack.org/
-.. _redis: http://redis.io
 .. _graphite: http://graphite.wikidot.com/quickstart-guide
 .. _mongodb: http://mongodb.org
 
