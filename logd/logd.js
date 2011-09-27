@@ -312,7 +312,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
           var i = 0;
 
           for (i=0; i < rates.length; i++) {
-            count += 1 / rates;
+            count += 1 / rates[i];
           }
 
           if (count > 1) {
