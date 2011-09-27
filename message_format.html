@@ -71,6 +71,12 @@ for each message type:</p>
 <span class="nx">meter</span><span class="o">:</span> <span class="mi">4</span>
 </pre></div>
 </div>
+<p>Many of the stats types take an optional <tt class="docutils literal"><span class="pre">sampleRate</span></tt> parameter, which is
+a fraction from 1 of the number of events encountered that are sent to the
+server.  For instance, if you encounter an event on the order of 1000/sec,
+you can apply a <tt class="docutils literal"><span class="pre">0.01</span></tt> sample rate, sending on average 10 packets/sec to
+logd, which will then apply the reverse of the sample rate to give you an
+approximation of the <em>real</em> rate.</p>
 <p>The messages are described below as they&#8217;d appear in a JSON document, but they
 should be encoded with a msgpack encoder and sent via UDP over the wire.</p>
 </div>
@@ -102,14 +108,12 @@ becomes the stats bucket in graphite:</p>
     <span class="nx">id</span><span class="o">:</span> <span class="mi">2</span><span class="p">,</span>
     <span class="nx">key</span><span class="o">:</span> <span class="p">(</span><span class="nb">String</span><span class="p">),</span>
     <span class="nx">value</span><span class="o">:</span> <span class="p">(</span><span class="kr">int</span><span class="p">),</span>
-    <span class="p">[</span><span class="nx">sampleRate</span><span class="p">]</span><span class="o">:</span> <span class="p">(</span><span class="kr">int</span><span class="p">)</span>
+    <span class="p">[</span><span class="nx">sampleRate</span><span class="p">]</span><span class="o">:</span> <span class="p">(</span><span class="kr">double</span><span class="p">)</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 <p>The <tt class="docutils literal"><span class="pre">sampleRate</span></tt> parameter is optional, but if provided, it will be used
-to compensate for the value when they are flushed.  For instance, if a
-sample rate of <tt class="docutils literal"><span class="pre">20</span></tt> is given, that is assumed to be <tt class="docutils literal"><span class="pre">20%</span></tt>, and the value
-for that counter will be multiplied by <tt class="docutils literal"><span class="pre">100/20</span></tt> (or <tt class="docutils literal"><span class="pre">5</span></tt>).</p>
+to compensate for the value of the counter.</p>
 </div>
 <div class="section" id="timers">
 <h2>Timers<a class="headerlink" href="#timers" title="Permalink to this headline">¶</a></h2>
@@ -117,11 +121,14 @@ for that counter will be multiplied by <tt class="docutils literal"><span class=
 <div class="highlight-javascript"><div class="highlight"><pre><span class="p">{</span>
     <span class="nx">id</span><span class="o">:</span> <span class="mi">3</span><span class="p">,</span>
     <span class="nx">key</span><span class="o">:</span> <span class="p">(</span><span class="nb">String</span><span class="p">),</span>
-    <span class="nx">value</span><span class="o">:</span> <span class="p">(</span><span class="kr">double</span><span class="p">)</span>
+    <span class="nx">value</span><span class="o">:</span> <span class="p">(</span><span class="kr">double</span><span class="p">),</span>
+    <span class="p">[</span><span class="nx">sampleRate</span><span class="p">]</span><span class="o">:</span> <span class="p">(</span><span class="kr">double</span><span class="p">)</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>Timers do not take <tt class="docutils literal"><span class="pre">sampleRates</span></tt>, and their <tt class="docutils literal"><span class="pre">value</span></tt> is in seconds.</p>
+<p>The <tt class="docutils literal"><span class="pre">sampleRate</span></tt> parameter is optional, but if provided, it will be used to
+compensate for the &#8220;count&#8221; in the resulting time data so that it reflects the
+number of events encountered rather than the number of data points.</p>
 </div>
 <div class="section" id="meters">
 <h2>Meters<a class="headerlink" href="#meters" title="Permalink to this headline">¶</a></h2>
@@ -130,7 +137,7 @@ for that counter will be multiplied by <tt class="docutils literal"><span class=
     <span class="nx">id</span><span class="o">:</span> <span class="mi">4</span><span class="p">,</span>
     <span class="nx">key</span><span class="o">:</span> <span class="p">(</span><span class="nb">String</span><span class="p">),</span>
     <span class="nx">value</span><span class="o">:</span> <span class="p">(</span><span class="kr">double</span><span class="p">),</span>
-    <span class="p">[</span><span class="nx">sampleRate</span><span class="p">]</span><span class="o">:</span> <span class="p">(</span><span class="kr">int</span><span class="p">)</span>
+    <span class="p">[</span><span class="nx">sampleRate</span><span class="p">]</span><span class="o">:</span> <span class="p">(</span><span class="kr">double</span><span class="p">)</span>
 <span class="p">}</span>
 </pre></div>
 </div>

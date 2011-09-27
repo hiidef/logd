@@ -28,6 +28,13 @@ for each message type::
     timer: 3
     meter: 4
 
+Many of the stats types take an optional ``sampleRate`` parameter, which is
+a fraction from 1 of the number of events encountered that are sent to the
+server.  For instance, if you encounter an event on the order of 1000/sec,
+you can apply a ``0.01`` sample rate, sending on average 10 packets/sec to
+logd, which will then apply the reverse of the sample rate to give you an
+approximation of the *real* rate.
+
 The messages are described below as they'd appear in a JSON document, but they
 should be encoded with a msgpack encoder and sent via UDP over the wire.
 
@@ -65,13 +72,11 @@ becomes the stats bucket in graphite::
         id: 2,
         key: (String),
         value: (int),
-        [sampleRate]: (int)
+        [sampleRate]: (double)
     }
     
 The ``sampleRate`` parameter is optional, but if provided, it will be used
-to compensate for the value when they are flushed.  For instance, if a
-sample rate of ``20`` is given, that is assumed to be ``20%``, and the value
-for that counter will be multiplied by ``100/20`` (or ``5``).
+to compensate for the value of the counter.
 
 Timers
 ------
@@ -81,10 +86,13 @@ The timer format::
     {
         id: 3,
         key: (String),
-        value: (double)
+        value: (double),
+        [sampleRate]: (double)
     }
 
-Timers do not take ``sampleRates``, and their ``value`` is in seconds.
+The ``sampleRate`` parameter is optional, but if provided, it will be used to
+compensate for the "count" in the resulting time data so that it reflects the
+number of events encountered rather than the number of data points.
 
 Meters
 ------
@@ -95,7 +103,7 @@ The meter format::
         id: 4,
         key: (String),
         value: (double),
-        [sampleRate]: (int)
+        [sampleRate]: (double)
     }
 
 The ``sampleRate`` again is optional, but even if it is provided it does not
