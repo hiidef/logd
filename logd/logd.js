@@ -164,7 +164,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
         case types.TIMER:
           /* statsd like timer */
           var sampleRate = blob.rate || 1;
-          if (! timers[blob.key]) {
+          if (typeof(timers[blob.key]) == "undefined") {
             timers[blob.key] = {times: [], rates: []};
           }
           timers[blob.key].times.push(blob.value);
