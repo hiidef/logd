@@ -163,10 +163,12 @@ config.configFile(process.argv[2], function (config, oldConfig) {
           break;
         case types.TIMER:
           /* statsd like timer */
+          var sampleRate = blob.rate || 1;
           if (! timers[blob.key]) {
-            timers[blob.key] = [];
+            timers[blob.key] = {times: [], rates: []};
           }
-          timers[blob.key].push(blob.value);
+          timers[blob.key].times.push(blob.value);
+          timers[blob.key].rates.push(sampleRate);
           break;
         case types.METER:
           /* note that because of the nature of meters, although a sample rate
@@ -296,19 +298,26 @@ config.configFile(process.argv[2], function (config, oldConfig) {
 
     for (key in timers) {
       if (timers.hasOwnProperty(key)) {
-        if (timers[key].length > 0) {
+        if (typeof (timers[key].times) != "undefined" && timers[key].times.length > 0) {
           var pctThreshold = config.percentThreshold;
-          var values = timers[key].sort(sortValues);
-          var count = values.length;
+          var values = timers[key].times.sort(sortValues);
+          var numValues = values.length;
+          var rates = timers[key].rates;
+          var count = 0;
           var min = values[0];
-          var max = values[count - 1];
+          var max = values[numValues - 1];
 
           var mean = min;
           var maxAtThreshold = max;
+          var i = 0;
+
+          for (i=0; i < rates.length; i++) {
+            count += 1 / rates;
+          }
 
           if (count > 1) {
-            var thresholdIndex = Math.round(((100 - pctThreshold) / 100) * count);
-            var numInThreshold = count - thresholdIndex;
+            var thresholdIndex = Math.round(((100 - pctThreshold) / 100) * numValues);
+            var numInThreshold = numValues - thresholdIndex;
             var sum = 0, i = 0;
 
             values = values.slice(0, numInThreshold);
@@ -322,7 +331,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
             mean = sum / numInThreshold;
           }
 
-          timers[key] = [];
+          timers[key] = {timers:[], rates:[]};
 
           var message = "";
           message += 'stats.timers.' + key + '.mean ' + mean + ' ' + ts + "\n";
