@@ -6,12 +6,13 @@
     "host": "localhost"
   },
   "mongo" : {
-    "host": "localhost", 
+    "host": "localhost",
+    "native_parser": false
   },
   "logs": {
     "default": {
       "size": 262144000,
-      "max": 1000000,
+      "max": 1000000
     }
   }
 }
