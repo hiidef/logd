@@ -5,7 +5,7 @@
  */
 
 var fs  = require('fs')
-  , sys = require('sys')
+  , util = require('util')
   , vm = require('vm')
   , color = require('./colored');
 
@@ -21,7 +21,7 @@ var Configurator = function (file) {
   }
 
   this.updateConfig = function () {
-    sys.log('reading config file: ' + file);
+    util.log('reading config file: ' + file);
 
     fs.readFile(file, function (err, data) {
       if (err) { throw err; }
@@ -39,7 +39,7 @@ var Configurator = function (file) {
   });
 };
 
-sys.inherits(Configurator, process.EventEmitter);
+util.inherits(Configurator, process.EventEmitter);
 
 exports.Configurator = Configurator;
 

@@ -4,9 +4,9 @@
  */
 
 var dgram   = require("dgram")
-  , sys     = require("sys")
+  , util    = require("util")
   , net     = require("net")
-  , msgpack = require("msgpack")
+  , msgpack = require("msgpack2")
   , async   = require("async")
   , config  = require("./config")
   , color   = require("./colored")
@@ -34,7 +34,7 @@ var debugInt, flushInt, logInt, statsInt, server;
 /* Delete a log and all support data for a given log on a path. */
 function deleteLog(store, path) {
   store.deleteLog(path, function() {
-     sys.log("Log file " + path + " deleted."); 
+     util.log("Log file " + path + " deleted."); 
   });
 }
 
@@ -47,7 +47,7 @@ function sendStats(config, stats) {
     var graphite = net.createConnection(port, host);
     graphite.addListener('error', function(connectionException){
       if (config.debug) {
-        sys.log(connectionException);
+        util.log(connectionException);
       }
     });
     graphite.on('connect', function() {
@@ -56,7 +56,7 @@ function sendStats(config, stats) {
     });
   } catch(e) {
     if (config.debug) {
-      sys.log(e);
+      util.log(e);
     }
   }
 }
@@ -87,12 +87,12 @@ function cleanConfig(config) {
   });
 
   if (typeof(config.mongo) === "undefined") {
-    sys.log(color.orange("Warning:") + " no mongo config, using defaults.");
+    util.log(color.orange("Warning:") + " no mongo config, using defaults.");
     config.mongo = {};
   }
 
   if (typeof(config.graphite) === "undefined") {
-    sys.log(color.orange("Warning:") + " no graphite config, using defaults.");
+    util.log(color.orange("Warning:") + " no graphite config, using defaults.");
     config.graphite = {};
   }
 
@@ -114,8 +114,8 @@ config.configFile(process.argv[2], function (config, oldConfig) {
   if (config.debug) {
     if (debugInt) { clearInterval(debugInt); }
     debugInt = setInterval(function () {
-      sys.log("counters: " + sys.inspect(counters));
-      sys.log("timers: " + sys.inspect(timers));
+      util.log("counters: " + util.inspect(counters));
+      util.log("timers: " + util.inspect(timers));
     }, config.debugInterval);
   }
 
@@ -129,11 +129,11 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     server = dgram.createSocket('udp4', function (msg, rinfo) {
       var blob = msgpack.unpack(msg);
       if (!blob) { 
-        sys.log("Error with message " + msg);
+        util.log("Error with message " + msg);
         return; 
       }
       if (config.debug) { 
-        sys.log(sys.inspect(msg)); 
+        util.log(util.inspect(msg)); 
       }
 
       switch (blob.id) {
@@ -191,7 +191,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     });
     
     server.on("listening", function() {
-      sys.log("logd listening on port " + port);
+      util.log("logd listening on port " + port);
     });
 
     server.bind(port);
@@ -204,7 +204,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
       dmsg = logsReceived - logsReceivedPrev;
       logsReceivedPrev = logsReceived;
       interval = Number(config.logInterval / 1000)
-      sys.log("Received " + dmsg + " messages in " + interval + "s (" + logsReceived + " total).");
+      util.log("Received " + dmsg + " messages in " + interval + "s (" + logsReceived + " total).");
     }
   }, config.logInterval);
 
@@ -214,7 +214,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
 
   updateInt = setInterval(function() {
     store.updateAggregates();
-    sys.log("Updated store aggregates.");
+    util.log("Updated store aggregates.");
   }, config.updateInterval);
 
   /* every flushInterval (default: 1s), flush local messages to the datastore */
@@ -349,7 +349,7 @@ config.configFile(process.argv[2], function (config, oldConfig) {
     statString += 'stats.numStats ' + numStats + ' ' + ts + "\n";
     if (numStats) {
       if (config.debug) {
-        sys.log("Sending stats string: \n" + statString);
+        util.log("Sending stats string: \n" + statString);
       }
       sendStats(config, statString);
     }

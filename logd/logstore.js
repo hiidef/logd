@@ -17,7 +17,7 @@
  */
 
 var mongodb = require("mongodb")
-  , sys     = require("sys")
+  , util    = require("util")
   , async   = require("async");
 
 
@@ -56,7 +56,7 @@ var MongoConnection = function(config) {
  
   self.connect = function() {
     self.db.open(function(err, db) {
-      sys.log("Connected to mongodb.");
+      util.log("Connected to mongodb.");
       self.emit("connect", db);
     });
   };
@@ -65,16 +65,16 @@ var MongoConnection = function(config) {
 
   self.info = function(string) {
     return function(err, data) {
-      sys.log(string);
+      util.log(string);
       self.print(err, data);
     };
   };
 
   self.print = function(err, data) {
     if (err) {
-      sys.log("Error: " + sys.inspect(err));
+      util.log("Error: " + util.inspect(err));
     } else {
-      sys.log("Data: " + sys.inspect(data));
+      util.log("Data: " + util.inspect(data));
     }
   };
   
@@ -82,7 +82,7 @@ var MongoConnection = function(config) {
   self.connect();
 };
 
-sys.inherits(MongoConnection, process.EventEmitter);
+util.inherits(MongoConnection, process.EventEmitter);
 
 /* Document Store abstraction */
 
@@ -206,7 +206,7 @@ var Store = function(config) {
         },
         function(c) {
           /* remove the log file's configuration */
-          self.config.remove({name: 'file:' + name}, function() {
+          self.config.remove({"name": name}, function() {
             c(null, null);
           });
         }], callback);
@@ -254,7 +254,7 @@ var Store = function(config) {
 
 };
 
-sys.inherits(Store, process.EventEmitter);
+util.inherits(Store, process.EventEmitter);
 
 exports.MongoConnection = MongoConnection;
 exports.Store = Store;
