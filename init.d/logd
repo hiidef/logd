@@ -45,7 +45,10 @@ stop_logd() {
         log_end_msg 1
     fi
     # make sure all processes using our pidfile are really dead.
-    for pid in `ps aux |grep $PIDFILE |grep -v grep |awk '{print $2}'`; do
+    for pid in `ps aux |grep logd.js |grep -v grep |awk '{print $2}'`; do
+        kill $pid > /dev/null 2>&1
+    done
+    for pid in `ps aux |grep "logd/wrapper.sh" |grep -v grep |awk '{print $2}'`; do
         kill $pid > /dev/null 2>&1
     done
 }
