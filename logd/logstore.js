@@ -39,7 +39,7 @@ function extend(o1, o2) {
  *  - port : numeric or string port number, defaults to mongos' default
  *  - host : domain name or ip address, defaults to "localhost"
  *  - dbname: database name (defaults to "logd")
- *  - options: monogodb Db options;  defaults to turning native_parser on.
+ *  - options: monogodb Db options.
  */
 
 var MongoConnection = function(config) {
@@ -49,7 +49,7 @@ var MongoConnection = function(config) {
   self.port = Number(config.port || mongodb.Connection.DEFAULT_PORT);
   self.host = config.host || "localhost";
   self.dbname = config.db || "logd";
-  self.options = config.options || { native_parser: true};
+  self.options = config.options || {};
 
   self.server = new mongodb.Server(self.host, self.port, {auto_reconnect: true});
   self.db = new mongodb.Db(self.dbname, self.server, self.options);
@@ -97,6 +97,9 @@ var Store = function(config) {
   self.config = null;
   self.db = null;
 
+  /* initialize basic structure we need in the data store.
+   * this runs right after mongo connects to the db.
+   */
   self.initStore = function(db) {
     self.emit("connect", self);
     self.db = self.mongo.db;
@@ -116,11 +119,12 @@ var Store = function(config) {
 
     /* initialize the logd database and all of our setup info */
     async.parallel([
-      /* cache the current log paths */
+      /* create Collection objects for all current log paths */
       function(callback) {
         self.getLogFiles(function(paths) {
           paths.forEach(function(p) {
             self.logFiles[p] = new mongodb.Collection(self.db, p);
+            self.verifyConfig(p);
           });
           callback(null, paths);
         });
@@ -145,9 +149,60 @@ var Store = function(config) {
           ret[ret.length] = el.name.replace("logd.", "");
         }
       });
+      util.log("Found " + ret.length + " collections: " + ret);
       cb(ret);
     });
   };
+
+  /* If configuration for a log does not exist, create a stub.
+   */
+  self.verifyConfig = function(name) {
+    self.config.findOne({"name": name}, function(err, cur) {
+        if (cur == null) {
+          self.createLogConfig(name, function(){});
+        }
+    });
+  };
+
+  self.createLogConfig = function(name, options, callback) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    callback = args.pop();
+    options = args.length ? args.shift() : null;
+
+    /* if no options were passed, cook up some defaults */
+    if (options === null) {
+      var key;
+      options = {capped: true};
+      if (self.storeConfig.logs.hasOwnProperty(name)) {
+        options = extend(options, self.storeConfig.logs[name]);
+      } else {
+        options = extend(options, self.storeConfig.logs['default']);
+      }
+    } else if (!options.hasOwnProperty("capped")) {
+      options.capped = true;
+    }
+    
+    /* create the collection & configs */
+    async.parallel([
+      function(c) {
+        /* create the collection */
+        self.db.createCollection(name, options, function(e,collection) {
+          self.logFiles[name] = collection;
+          collection.ensureIndex(["_id", "level", "name"], function() {
+            collection.ensureIndex(["msg"], function() {
+              c(null, null);
+            });
+          });
+        });
+      },
+      function(c) {
+        /* add the path to the config */
+        self.config.insert({name: name, options: options}, function() {
+          c(null, null);
+        });
+    }], callback);
+  };
+
 
   /* create a log file if it isn't already created */
   self.createLog = function(name, options, callback) {
@@ -155,41 +210,10 @@ var Store = function(config) {
     callback = args.pop();
     options = args.length ? args.shift() : null;
 
-    if (self.logFiles.hasOwnProperty(name)) {
+    if (self.logFiles.hasOwnProperty(name) && !force) {
       callback(null, []);
     } else {
-      /* if no options were passed, cook up some defaults */
-      if (options === null) {
-        var key;
-        options = {capped: true};
-        if (self.storeConfig.logs.hasOwnProperty(name)) {
-          options = extend(options, self.storeConfig.logs[name]);
-        } else {
-          options = extend(options, self.storeConfig.logs['default']);
-        }
-      } else if (!options.hasOwnProperty("capped")) {
-        options.capped = true;
-      }
-      
-      /* create the collection & configs */
-      async.parallel([
-        function(c) {
-          /* create the collection */
-          self.db.createCollection(name, options, function(e,collection) {
-            self.logFiles[name] = collection;
-            collection.ensureIndex(["_id", "level", "name"], function() {
-              collection.ensureIndex(["msg"], function() {
-                c(null, null);
-              });
-            });
-          });
-        },
-        function(c) {
-          /* add the path to the config */
-          self.config.insert({name: name, options: options}, function() {
-            c(null, null);
-          });
-      }], callback);
+      self.createLogConfig(name, options, callback);
     }
   };
 

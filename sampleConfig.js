@@ -7,7 +7,6 @@
   },
   "mongo" : {
     "host": "localhost",
-    "native_parser": false
   },
   "logs": {
     "default": {
