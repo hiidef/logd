@@ -248,7 +248,7 @@ var Store = function(config) {
       });
     } else {
       var collection = self.logFiles[file];
-      collection.insertAll(lines);
+      collection.insert(lines);
       if (typeof(callback) !== "undefined") {
         callback(lines.length);
       }
